@@ -1,0 +1,895 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GridSight AI — BESCOM Smart Meter Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@700;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --blue:#1565c0;--blue2:#0d47a1;--blue-l:#e3f0ff;
+  --ink:#0a0f1e;--ink2:#1c2540;--ink3:#2e3a5c;
+  --surface:#f0f4ff;--card:#ffffff;--card2:#f7f9ff;
+  --accent:#0047ff;--accent2:#0033bb;--accent3:#e8f0ff;
+  --danger:#d4000a;--danger-l:#fff1f1;
+  --warn:#c45a00;--warn-l:#fff7ed;
+  --ok:#007a3d;--ok-l:#edfff5;
+  --purple:#5b21b6;--purple-l:#f3f0ff;
+  --border:rgba(0,71,255,0.12);--border2:rgba(0,71,255,0.22);
+  --mono:'JetBrains Mono',monospace;
+  --display:'Syne',sans-serif;
+  --body:'Space Grotesk',sans-serif;
+  --glow:0 0 0 3px rgba(0,71,255,0.1);
+  --shadow:0 1px 4px rgba(10,15,30,0.08),0 4px 16px rgba(0,71,255,0.06);
+  --shadow2:0 8px 32px rgba(0,71,255,0.12);
+  --panel:#ffffff;--panel2:#f8fafc;
+}
+html,body{width:100%;min-height:100vh;background:var(--surface);font-family:var(--body);color:var(--ink);overflow-x:hidden;}
+
+/* NAV PANEL */
+#nav-panel{position:absolute;bottom:20px;right:20px;width:186px;z-index:30;background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow);}
+.nav-dpad{display:grid;grid-template-columns:repeat(3,32px);gap:3px;margin:8px auto;width:fit-content;}
+.nb{width:32px;height:32px;border-radius:5px;border:1px solid var(--border2);background:var(--panel2);color:var(--accent);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:var(--body);}
+.nb:hover{background:var(--accent3);border-color:var(--accent);}
+.nb:active{transform:scale(.92);}
+.nb.empty{background:none;border:none;pointer-events:none;}
+.nb.center{border-color:var(--accent2);background:var(--accent3);}
+.preset-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px;}
+.pb{padding:5px 0;border-radius:4px;border:1px solid var(--border);background:var(--panel2);font-size:9px;letter-spacing:1px;cursor:pointer;text-transform:uppercase;color:#5a6888;text-align:center;transition:all .15s;font-family:var(--body);font-weight:600;}
+.pb:hover,.pb.active{background:var(--accent3);border-color:var(--accent);color:var(--accent);}
+.zoom-row{display:flex;gap:4px;margin-top:4px;}
+.zb{flex:1;padding:5px 0;border-radius:4px;border:1px solid var(--border);background:var(--panel2);color:var(--accent);cursor:pointer;font-size:14px;text-align:center;transition:all .15s;font-family:var(--body);font-weight:600;}
+
+/* TOPBAR */
+#topbar{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.97);border-bottom:1px solid var(--border2);backdrop-filter:blur(20px);padding:0 20px;height:52px;display:flex;align-items:center;gap:0;}
+#logo{font-family:var(--display);font-size:18px;font-weight:800;color:var(--accent);letter-spacing:-0.5px;margin-right:24px;flex-shrink:0;}
+#logo em{color:var(--ink);font-style:normal;}
+.kpi{display:flex;flex-direction:column;align-items:center;padding:0 16px;border-left:1px solid var(--border2);min-width:88px;}
+.kpi-val{font-family:var(--mono);font-size:14px;font-weight:700;line-height:1;}
+.kpi-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#7a8bad;margin-top:2px;}
+.kpi-danger .kpi-val{color:var(--danger);}
+.kpi-warn .kpi-val{color:var(--warn);}
+.kpi-ok .kpi-val{color:var(--ok);}
+.kpi-blue .kpi-val{color:var(--accent);}
+.kpi-purple .kpi-val{color:var(--purple);}
+#topright{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.live-badge{display:flex;align-items:center;gap:5px;background:var(--ok-l);border:1px solid rgba(0,122,61,0.3);border-radius:20px;padding:4px 10px;font-size:9px;letter-spacing:1.5px;color:var(--ok);text-transform:uppercase;font-weight:600;}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--ok);animation:pulse 1.8s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.8)}}
+#clock{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:0.5px;background:var(--accent3);padding:4px 8px;border-radius:6px;}
+.tab-bar{display:flex;gap:2px;background:var(--accent3);padding:3px;border-radius:8px;}
+.tab{padding:4px 12px;border-radius:5px;font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:600;cursor:pointer;color:#5a6888;transition:all .2s;border:none;background:none;font-family:var(--body);}
+.tab.active{background:#fff;color:var(--accent);box-shadow:var(--shadow);}
+
+/* MAIN GRID */
+#main{display:grid;grid-template-columns:260px 1fr 220px;grid-template-rows:auto auto auto;gap:12px;padding:14px 16px;max-width:1400px;margin:0 auto;}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:14px 15px;}
+.card-title{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.card-title-left{display:flex;align-items:center;gap:6px;}
+.card-title-left::before{content:'';width:10px;height:2px;background:var(--accent);border-radius:1px;display:block;}
+.badge{font-size:8px;padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:0.5px;}
+.bd{background:var(--danger-l);color:var(--danger);}
+.bw{background:var(--warn-l);color:var(--warn);}
+.bok{background:var(--ok-l);color:var(--ok);}
+.bp{background:var(--purple-l);color:var(--purple);}
+
+/* ZONE RISK PANEL */
+#zone-panel{grid-column:1;grid-row:1/4;}
+.zone-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;border-radius:6px;padding-left:6px;margin-left:-6px;}
+.zone-item:last-child{border-bottom:none;}
+.zone-item:hover{background:var(--accent3);}
+.z-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.z-name{font-size:11px;font-weight:500;flex:1;}
+.z-bar-bg{width:50px;height:4px;background:#e8eef5;border-radius:2px;}
+.z-bar{height:4px;border-radius:2px;transition:width .5s ease;}
+.z-pct{font-family:var(--mono);font-size:10px;min-width:28px;text-align:right;font-weight:600;}
+.z-high{color:var(--danger);}
+.z-med{color:var(--warn);}
+.z-low{color:var(--ok);}
+.ai-box{background:linear-gradient(135deg,#0047ff08,#5b21b608);border:1px solid rgba(0,71,255,0.15);border-radius:8px;padding:10px;margin-top:10px;}
+.ai-box-title{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:5px;}
+.ai-text{font-size:10px;line-height:1.6;color:var(--ink3);}
+
+/* CENTER CONTENT */
+#center{grid-column:2;grid-row:1/4;display:flex;flex-direction:column;gap:12px;}
+#map-card{flex:1;min-height:280px;position:relative;overflow:hidden;}
+#city-canvas{width:100%;height:100%;display:block;border-radius:8px;cursor:crosshair;}
+.map-overlay{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;}
+.layer-btn{padding:5px 10px;border-radius:5px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);font-size:9px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;color:#fff;font-weight:600;transition:all .15s;font-family:var(--body);}
+.layer-btn.active,.layer-btn:hover{background:rgba(0,71,255,0.8);border-color:var(--accent);}
+.map-legend{position:absolute;bottom:10px;left:10px;display:flex;gap:8px;background:rgba(0,0,0,0.55);backdrop-filter:blur(10px);border-radius:6px;padding:6px 10px;}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:9px;color:#fff;letter-spacing:0.5px;}
+.leg-dot{width:6px;height:6px;border-radius:50%;}
+.map-tip{position:absolute;display:none;background:#fff;border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-size:10px;box-shadow:var(--shadow2);pointer-events:none;min-width:160px;z-index:20;}
+.tip-header{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);margin-bottom:6px;}
+.tip-row{display:flex;justify-content:space-between;gap:16px;margin-bottom:3px;}
+.tip-label{color:#7a8bad;font-size:9px;}
+.tip-val{font-family:var(--mono);font-size:10px;font-weight:600;}
+.risk-pill{margin-top:5px;display:inline-block;padding:2px 8px;border-radius:10px;font-size:8px;font-weight:700;letter-spacing:0.5px;}
+
+/* CHARTS ROW */
+#charts-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* ALERTS */
+#alert-panel{grid-column:3;grid-row:1/4;}
+.alert-item{padding:8px;border-radius:6px;border-left:3px solid;margin-bottom:7px;animation:slideIn .3s ease both;}
+@keyframes slideIn{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:none}}
+.a-crit{border-color:var(--danger);background:var(--danger-l);}
+.a-warn{border-color:var(--warn);background:var(--warn-l);}
+.a-info{border-color:var(--accent);background:var(--accent3);}
+.a-msg{font-size:10px;line-height:1.5;color:var(--ink);}
+.a-time{font-family:var(--mono);font-size:8px;color:#7a8bad;margin-top:2px;}
+.a-tag{font-size:7.5px;font-weight:700;letter-spacing:0.5px;margin-bottom:3px;text-transform:uppercase;}
+.at-crit{color:var(--danger);}
+.at-warn{color:var(--warn);}
+.at-info{color:var(--accent);}
+
+/* PREDICTION CARD */
+.pred-card{background:linear-gradient(135deg,#0047ff08,transparent);border:1px solid var(--border2);border-radius:8px;padding:10px;margin-bottom:8px;}
+.pred-label{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#7a8bad;margin-bottom:3px;}
+.pred-val{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);}
+.pred-sub{font-size:9px;color:#7a8bad;margin-top:1px;}
+.prog-bg{height:5px;background:#e8eef5;border-radius:3px;margin-top:5px;}
+.prog-fill{height:5px;border-radius:3px;transition:width .8s ease;}
+
+/* GAUGE */
+#gauge-wrap{position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+#gauge-val{position:absolute;font-family:var(--mono);font-size:22px;font-weight:700;color:var(--accent);margin-top:12px;}
+#gauge-label{position:absolute;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:#7a8bad;margin-top:46px;}
+
+/* DEMAND FORECAST */
+.spark-wrap{position:relative;}
+canvas.chart-canvas{width:100%;display:block;}
+
+/* HEATMAP */
+.heat-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin-top:4px;}
+.heat-cell{height:18px;border-radius:3px;transition:opacity .3s;cursor:pointer;position:relative;}
+.heat-cell:hover{opacity:0.7;outline:1px solid var(--accent);}
+.heat-label-row{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;}
+.heat-label{font-family:var(--mono);font-size:7px;text-align:center;color:#7a8bad;margin-top:2px;}
+
+/* THEFT DETECTION */
+.theft-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);}
+.theft-row:last-child{border-bottom:none;}
+.theft-id{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--ink);min-width:70px;}
+.theft-bar-bg{flex:1;height:5px;background:#e8eef5;border-radius:3px;}
+.theft-bar-fill{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--warn),var(--danger));}
+.theft-pct{font-family:var(--mono);font-size:9px;font-weight:700;min-width:32px;text-align:right;}
+.theft-badge{font-size:7px;font-weight:700;padding:1px 5px;border-radius:3px;letter-spacing:0.3px;}
+
+/* BUILDING DETAIL PANEL */
+#bpanel{position:fixed;top:0;right:-380px;width:360px;height:100vh;background:var(--card);border-left:1px solid var(--border2);box-shadow:-8px 0 32px rgba(0,71,255,0.10);z-index:200;transition:right .35s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:20px;}
+#bpanel.open{right:0;}
+#bp-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:none;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;color:var(--ink3);}
+.bstat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;}
+.bstat{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;}
+.bstat-val{font-family:var(--mono);font-size:16px;font-weight:700;}
+.bstat-label{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:#7a8bad;margin-top:2px;}
+.insight-box{background:linear-gradient(135deg,#f0f4ff,#f5f0ff);border:1px solid rgba(91,33,182,0.15);border-radius:8px;padding:12px;margin:10px 0;}
+.insight-title{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--purple);font-weight:700;margin-bottom:5px;}
+.insight-text{font-size:10.5px;line-height:1.6;color:var(--ink3);}
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px;}
+.abtn{padding:8px;border-radius:6px;font-size:10px;font-weight:600;letter-spacing:0.5px;cursor:pointer;border:1px solid;transition:all .2s;font-family:var(--body);}
+.ab-primary{border-color:var(--accent);color:var(--accent);background:var(--accent3);}
+.ab-danger{border-color:var(--danger);color:var(--danger);background:var(--danger-l);}
+
+/* DEMAND PREDICTION SECTION */
+#predict-section{display:none;}
+#predict-section.active{display:block;}
+.zone-risk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
+.zone-risk-card{border-radius:8px;padding:10px;text-align:center;border:1px solid transparent;}
+.zrc-high{background:var(--danger-l);border-color:rgba(212,0,10,0.2);}
+.zrc-med{background:var(--warn-l);border-color:rgba(196,90,0,0.2);}
+.zrc-low{background:var(--ok-l);border-color:rgba(0,122,61,0.2);}
+.zrc-val{font-family:var(--mono);font-size:14px;font-weight:700;}
+.zrc-label{font-size:8px;letter-spacing:0.5px;text-transform:uppercase;margin-top:2px;font-weight:600;}
+.fcast-row{display:flex;gap:3px;align-items:flex-end;height:60px;margin:10px 0 4px;}
+.fcast-bar{flex:1;border-radius:2px 2px 0 0;cursor:pointer;transition:opacity .2s;position:relative;}
+.fcast-bar:hover{opacity:.75;}
+.fcast-labels{display:flex;gap:3px;}
+.fcast-label{flex:1;font-family:var(--mono);font-size:7px;text-align:center;color:#7a8bad;}
+
+/* ANOMALY SECTION */
+#anomaly-section{display:none;}
+#anomaly-section.active{display:block;}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  #main{grid-template-columns:1fr;grid-template-rows:auto;}
+  #zone-panel,#alert-panel{grid-column:1;grid-row:auto;}
+  #center{grid-column:1;}
+  #bpanel{width:100%;right:-100%;}
+  #charts-row{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  #topbar{height:auto;min-height:44px;flex-wrap:wrap;padding:8px 12px;gap:6px;}
+  .kpi{padding:0 8px;}
+  #logo{font-size:15px;}
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div id="logo">GRID<em>SIGHT</em></div>
+  <div class="kpi kpi-danger"><div class="kpi-val" id="tc-alerts">12</div><div class="kpi-label">Active Alerts</div></div>
+  <div class="kpi kpi-warn"><div class="kpi-val" id="tc-health">76%</div><div class="kpi-label">Grid Health</div></div>
+  <div class="kpi kpi-blue"><div class="kpi-val">284 MW</div><div class="kpi-label">Total Load</div></div>
+  <div class="kpi kpi-danger"><div class="kpi-val" id="tc-theft">7</div><div class="kpi-label">Theft Cases</div></div>
+  <div class="kpi kpi-ok"><div class="kpi-val">4,218</div><div class="kpi-label">Online Meters</div></div>
+  <div id="topright">
+    <div class="tab-bar">
+      <button class="tab active" onclick="switchTab('grid')">Grid</button>
+      <button class="tab" onclick="switchTab('predict')">AI Predict</button>
+      <button class="tab" onclick="switchTab('anomaly')">Anomaly</button>
+      <button class="tab" onclick="location.href='landing_standalone.html'" style="background:var(--danger-l); color:var(--danger);">Exit</button>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div>Live · BESCOM</div>
+    <div id="clock">00:00:00 IST</div>
+    <button class="tab" onclick="location.href='landing_standalone.html'" style="margin-left:8px; background:var(--danger-l); color:var(--danger); border:1px solid rgba(212,0,10,0.2);">Exit Demo</button>
+  </div>
+</div>
+
+<div id="main">
+
+  <!-- LEFT: ZONE RISK + ALERTS -->
+  <div id="zone-panel" class="card">
+    <div class="card-title"><div class="card-title-left">Zone Risk Index</div><span class="badge bd">3 CRITICAL</span></div>
+    <div id="zone-list"></div>
+    <div class="ai-box" style="margin-top:12px;">
+      <div class="ai-box-title">⬡ AI Demand Forecast</div>
+      <div class="ai-text">Jayanagar & Koramangala showing +18% above baseline. Peak load expected 18:30–21:00 IST. Preventive load-shedding recommended for Zones 3, 7.</div>
+    </div>
+    <div style="margin-top:12px;">
+      <div class="card-title"><div class="card-title-left">Theft Probability Ranking</div></div>
+      <div id="theft-list"></div>
+    </div>
+  </div>
+
+  <!-- CENTER: MAP + CHARTS -->
+  <div id="center">
+    <div class="card" id="map-card" style="padding:0;min-height:280px;">
+      <canvas id="city-canvas" height="280"></canvas>
+      <div class="map-overlay">
+        <button class="layer-btn active" onclick="setLayer('grid',this)">Grid</button>
+        <button class="layer-btn" onclick="setLayer('heat',this)">Heat</button>
+        <button class="layer-btn" onclick="setLayer('theft',this)">Theft</button>
+        <button class="layer-btn" onclick="setLayer('predict',this)">Predict</button>
+      </div>
+      <div class="map-legend">
+        <div class="leg-item"><div class="leg-dot" style="background:#d4000a"></div>High Risk</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#c45a00"></div>Medium</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#007a3d"></div>Normal</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#0047ff"></div>Meter</div>
+      </div>
+      <div class="map-tip" id="map-tip">
+        <div class="tip-header" id="tip-id">MTR-0001</div>
+        <div class="tip-row"><span class="tip-label">Zone</span><span class="tip-val" id="tip-zone">—</span></div>
+        <div class="tip-row"><span class="tip-label">Load</span><span class="tip-val" id="tip-load">—</span></div>
+        <div class="tip-row"><span class="tip-label">Voltage</span><span class="tip-val" id="tip-volt">—</span></div>
+        <div class="tip-row"><span class="tip-label">Anomaly</span><span class="tip-val" id="tip-anm">—</span></div>
+        <div class="tip-row"><span class="tip-label">Theft Prob.</span><span class="tip-val" id="tip-theft">—</span></div>
+        <div id="tip-risk-pill"></div>
+      </div>
+
+      <!-- NAV PANEL -->
+      <div id="nav-panel">
+        <div class="nav-dpad">
+          <div class="nb empty"></div>
+          <button class="nb" id="nf">▲</button>
+          <div class="nb empty"></div>
+          <button class="nb" id="nl">◀</button>
+          <button class="nb center" id="nr">⌂</button>
+          <button class="nb" id="nrr">▶</button>
+        </div>
+        <div class="zoom-row">
+          <button class="zb" id="nzi">+</button>
+          <button class="zb" id="nzo">−</button>
+          <button class="zb" id="nup">▲Up</button>
+          <button class="zb" id="ndn">▼Dn</button>
+        </div>
+        <div class="preset-row">
+          <button class="pb active" data-p="orbit">🔄 Orbit</button>
+          <button class="pb" data-p="top">🗺 Top</button>
+          <button class="pb" data-p="street">🏙 Street</button>
+          <button class="pb" data-p="iso">📐 Iso</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRID TAB -->
+    <div id="grid-section">
+      <div id="charts-row">
+        <div class="card">
+          <div class="card-title"><div class="card-title-left">24H Consumption (MW)</div></div>
+          <canvas id="spark-main" class="chart-canvas" height="70"></canvas>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:8px;color:#7a8bad;">00:00</span>
+            <span style="font-size:8px;color:#7a8bad;">06:00</span>
+            <span style="font-size:8px;color:#7a8bad;">12:00</span>
+            <span style="font-size:8px;color:#7a8bad;">18:00</span>
+            <span style="font-size:8px;color:#7a8bad;">23:59</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><div class="card-title-left">Grid Health Gauge</div></div>
+          <div id="gauge-wrap">
+            <canvas id="gauge-canvas" width="190" height="100" style="width:100%;max-width:190px;"></canvas>
+            <div id="gauge-val">76%</div>
+            <div id="gauge-label">Health</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="card-title-left">Anomaly Distribution by Hour & Zone</div><span class="badge bp">AI Heatmap</span></div>
+        <div id="heatmap-container"></div>
+      </div>
+    </div>
+
+    <!-- PREDICT TAB -->
+    <div id="predict-section">
+      <div class="card">
+        <div class="card-title"><div class="card-title-left">AI Demand Forecast — Next 12 Hours</div><span class="badge bp">LSTM Model</span></div>
+        <div class="fcast-row" id="fcast-bars"></div>
+        <div class="fcast-labels" id="fcast-labels"></div>
+        <div style="margin-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+          <div class="pred-card"><div class="pred-label">Peak Predicted</div><div class="pred-val">312 MW</div><div class="pred-sub">At 19:30 IST</div><div class="prog-bg"><div class="prog-fill" style="width:87%;background:var(--danger);"></div></div></div>
+          <div class="pred-card"><div class="pred-label">High-Risk Zones</div><div class="pred-val" style="color:var(--danger);">4 Zones</div><div class="pred-sub">Exceeding threshold</div><div class="prog-bg"><div class="prog-fill" style="width:67%;background:var(--warn);"></div></div></div>
+          <div class="pred-card"><div class="pred-label">Forecast Accuracy</div><div class="pred-val" style="color:var(--ok);">94.2%</div><div class="pred-sub">vs baseline MAPE 3.2</div><div class="prog-bg"><div class="prog-fill" style="width:94%;background:var(--ok);"></div></div></div>
+        </div>
+        <div class="zone-risk-grid">
+          <div class="zone-risk-card zrc-high"><div class="zrc-val" style="color:var(--danger);">+22%</div><div class="zrc-label" style="color:var(--danger);">Jayanagar</div></div>
+          <div class="zone-risk-card zrc-high"><div class="zrc-val" style="color:var(--danger);">+18%</div><div class="zrc-label" style="color:var(--danger);">Koramangala</div></div>
+          <div class="zone-risk-card zrc-med"><div class="zrc-val" style="color:var(--warn);">+11%</div><div class="zrc-label" style="color:var(--warn);">Banashankari</div></div>
+          <div class="zone-risk-card zrc-med"><div class="zrc-val" style="color:var(--warn);">+8%</div><div class="zrc-label" style="color:var(--warn);">Rajajinagar</div></div>
+          <div class="zone-risk-card zrc-low"><div class="zrc-val" style="color:var(--ok);">+2%</div><div class="zrc-label" style="color:var(--ok);">Whitefield</div></div>
+          <div class="zone-risk-card zrc-low"><div class="zrc-val" style="color:var(--ok);">−3%</div><div class="zrc-label" style="color:var(--ok);">Yelahanka</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANOMALY TAB -->
+    <div id="anomaly-section">
+      <div class="card">
+        <div class="card-title"><div class="card-title-left">Anomaly & Theft Detection Engine</div><span class="badge bd">7 FLAGGED</span></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
+          <div class="bstat"><div class="bstat-val" style="color:var(--danger);">7</div><div class="bstat-label">Theft Flags</div></div>
+          <div class="bstat"><div class="bstat-val" style="color:var(--warn);">14</div><div class="bstat-label">Anomalies</div></div>
+          <div class="bstat"><div class="bstat-val" style="color:var(--accent);">2.1%</div><div class="bstat-label">False Pos. Rate</div></div>
+          <div class="bstat"><div class="bstat-val" style="color:var(--ok);">96.4%</div><div class="bstat-label">Detection Acc.</div></div>
+        </div>
+        <div id="anomaly-table"></div>
+        <div class="ai-box" style="margin-top:10px;">
+          <div class="ai-box-title">⬡ AI Pattern Analysis</div>
+          <div class="ai-text">Cluster in Sector 7 (MTR-0047, MTR-0052, MTR-0061) shows coordinated consumption dips every 2-4 hours — consistent with meter bypass signature. High confidence (87%) of organised tampering. Recommend physical inspection priority.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: ALERTS -->
+  <div id="alert-panel" class="card">
+    <div class="card-title"><div class="card-title-left">AI Alert Feed</div><span class="badge bd" id="alert-count">12</span></div>
+    <div id="alert-feed"></div>
+  </div>
+
+</div>
+
+<!-- BUILDING DETAIL PANEL -->
+<div id="bpanel">
+  <button id="bp-close" onclick="document.getElementById('bpanel').classList.remove('open')">✕</button>
+  <div style="font-family:var(--display);font-size:14px;font-weight:800;color:var(--accent);margin-bottom:2px;" id="bp-id">MTR-0001</div>
+  <div style="font-size:10px;color:#7a8bad;" id="bp-zone">Jayanagar Zone A</div>
+  <div class="bstat-grid">
+    <div class="bstat"><div class="bstat-val" id="bs-anomaly">82</div><div class="bstat-label">Anomaly Score</div></div>
+    <div class="bstat"><div class="bstat-val" id="bs-theft">73%</div><div class="bstat-label">Theft Prob.</div></div>
+    <div class="bstat"><div class="bstat-val" id="bs-load">—</div><div class="bstat-label">Load kW</div></div>
+    <div class="bstat"><div class="bstat-val" id="bs-volt">—</div><div class="bstat-label">Voltage V</div></div>
+  </div>
+  <canvas id="bp-graph" width="320" height="80" style="width:100%;border-radius:6px;"></canvas>
+  <div class="insight-box">
+    <div class="insight-title">⬡ AI Intelligence Summary</div>
+    <div class="insight-text" id="bs-insight">Loading AI analysis...</div>
+  </div>
+  <div class="action-row">
+    <button class="abtn ab-primary">Dispatch Audit</button>
+    <button class="abtn ab-danger">Flag Critical</button>
+  </div>
+  <div style="margin-top:12px;">
+    <div class="card-title"><div class="card-title-left">Consumption History (72H)</div></div>
+    <canvas id="bp-hist" width="320" height="60" style="width:100%;"></canvas>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const ZONES_DATA=[
+  {name:'Jayanagar',pct:87,color:'#d4000a',level:'h'},
+  {name:'Koramangala',pct:74,color:'#d4000a',level:'h'},
+  {name:'Banashankari',pct:68,color:'#c45a00',level:'m'},
+  {name:'Rajajinagar',pct:61,color:'#c45a00',level:'m'},
+  {name:'Indiranagar',pct:55,color:'#c45a00',level:'m'},
+  {name:'Whitefield',pct:28,color:'#007a3d',level:'l'},
+  {name:'Yelahanka',pct:15,color:'#007a3d',level:'l'},
+  {name:'Electronic City',pct:22,color:'#007a3d',level:'l'},
+];
+const THEFT_DATA=[
+  {id:'MTR-0047',pct:91,zone:'Sector 7',flag:'CRITICAL'},
+  {id:'MTR-0052',pct:87,zone:'Sector 7',flag:'CRITICAL'},
+  {id:'MTR-0061',pct:79,zone:'Sector 7',flag:'HIGH'},
+  {id:'MTR-0033',pct:65,zone:'Rajajinagar',flag:'HIGH'},
+  {id:'MTR-0108',pct:58,zone:'Koramangala',flag:'MEDIUM'},
+];
+const ALERTS_DATA=[
+  {type:'crit',tag:'THEFT DETECTED',msg:'MTR-0047 bypass signature detected. 3 consecutive dips below 12% nominal.', time:'18:42 IST'},
+  {type:'crit',tag:'GRID STRESS',msg:'Zone 3 (Jayanagar) at 94% capacity. Surge risk in 40 min.', time:'18:38 IST'},
+  {type:'warn',tag:'ANOMALY CLUSTER',msg:'Coordinated drop pattern in Sector 7 (3 meters). Peer deviation: +42%.', time:'18:31 IST'},
+  {type:'warn',tag:'DEMAND SPIKE',msg:'Koramangala evening peak 18% above forecast. Load balancing triggered.', time:'18:25 IST'},
+  {type:'crit',tag:'TAMPER ALERT',msg:'MTR-0052: voltage phase inconsistency detected. Possible meter reverse-connection.', time:'18:20 IST'},
+  {type:'info',tag:'FORECAST',msg:'Peak demand of 312 MW expected at 19:30. Feeder BK-07 pre-alert issued.', time:'18:15 IST'},
+  {type:'warn',tag:'ANOMALY',msg:'MTR-0033 consumption 67% below zone average. Abnormal dip since 17:50.', time:'18:08 IST'},
+  {type:'info',tag:'MODEL UPDATE',msg:'Demand prediction model retrained. MAPE improved to 3.2% (prev 4.8%).', time:'17:55 IST'},
+];
+const ANOMALY_TABLE=[
+  {id:'MTR-0047',zone:'Sector 7',score:91,type:'Bypass/Theft',confidence:94,action:'Dispatch'},
+  {id:'MTR-0052',zone:'Sector 7',score:87,type:'Phase Tamper',confidence:89,action:'Inspect'},
+  {id:'MTR-0061',zone:'Sector 7',score:79,type:'Abnormal Dip',confidence:81,action:'Monitor'},
+  {id:'MTR-0033',zone:'Rajajinagar',score:65,type:'Peer Deviation',confidence:72,action:'Monitor'},
+  {id:'MTR-0108',zone:'Koramangala',score:58,type:'Spike Pattern',confidence:68,action:'Watch'},
+];
+
+let currentLayer='grid', currentTab='grid';
+
+function renderZones(){
+  document.getElementById('zone-list').innerHTML=ZONES_DATA.map(z=>`
+    <div class="zone-item" onclick="handleZoneClick('${z.name}')">
+      <div class="z-dot" style="background:${z.color}"></div>
+      <span class="z-name">${z.name}</span>
+      <div class="z-bar-bg"><div class="z-bar" style="width:${z.pct}%;background:${z.color}"></div></div>
+      <span class="z-pct ${z.level==='h'?'z-high':z.level==='m'?'z-med':'z-low'}">${z.pct}%</span>
+    </div>`).join('');
+}
+function handleZoneClick(name){ console.log('zone',name); }
+
+function renderTheft(){
+  document.getElementById('theft-list').innerHTML=THEFT_DATA.map(t=>`
+    <div class="theft-row">
+      <span class="theft-id">${t.id}</span>
+      <div class="theft-bar-bg"><div class="theft-bar-fill" style="width:${t.pct}%"></div></div>
+      <span class="theft-pct" style="color:${t.pct>80?'var(--danger)':t.pct>60?'var(--warn)':'var(--ok)'}">${t.pct}%</span>
+      <span class="theft-badge ${t.flag==='CRITICAL'?'bd':t.flag==='HIGH'?'bw':'bok'}">${t.flag}</span>
+    </div>`).join('');
+}
+
+function renderAlerts(){
+  document.getElementById('alert-feed').innerHTML=ALERTS_DATA.map(a=>`
+    <div class="alert-item a-${a.type}">
+      <div class="a-tag at-${a.type}">${a.tag}</div>
+      <div class="a-msg">${a.msg}</div>
+      <div class="a-time">${a.time}</div>
+    </div>`).join('');
+}
+
+function renderAnomalyTable(){
+  document.getElementById('anomaly-table').innerHTML=`
+    <table style="width:100%;border-collapse:collapse;font-size:10px;">
+      <thead><tr style="border-bottom:1px solid var(--border2);">${['Meter ID','Zone','Score','Type','Confidence','Action'].map(h=>`<th style="padding:4px 6px;text-align:left;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:#7a8bad;">${h}</th>`).join('')}</tr></thead>
+      <tbody>${ANOMALY_TABLE.map(r=>`
+        <tr style="border-bottom:1px solid var(--border);cursor:pointer;" onclick="openBuilding({meterId:'${r.id}',zone:'${r.zone}',anomaly:${r.score},theft:${r.confidence},load:Math.round(80+Math.random()*120),voltage:Math.round(215+Math.random()*20),insight:'${r.type} pattern detected with ${r.confidence}% confidence. Peer comparison shows significant deviation from zone baseline. ${r.action === "Dispatch" ? "Physical audit recommended immediately." : "Continued monitoring with escalation trigger set at 80%."}' })">
+          <td style="padding:5px 6px;font-family:var(--mono);font-weight:700;color:var(--accent);">${r.id}</td>
+          <td style="padding:5px 6px;color:var(--ink3);">${r.zone}</td>
+          <td style="padding:5px 6px;font-family:var(--mono);font-weight:700;color:${r.score>80?'var(--danger)':r.score>60?'var(--warn)':'var(--ok)'};">${r.score}</td>
+          <td style="padding:5px 6px;">${r.type}</td>
+          <td style="padding:5px 6px;font-family:var(--mono);">${r.confidence}%</td>
+          <td style="padding:5px 6px;"><span class="badge ${r.action==='Dispatch'?'bd':r.action==='Inspect'?'bw':'bok'}">${r.action}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function renderHeatmap(){
+  const zones=['Jayanagar','Koramangala','Banashankari','Rajajinagar'];
+  const hours=Array.from({length:8},(_,i)=>['00','03','06','09','12','15','18','21'][i]);
+  const intensities=zones.map(z=>hours.map(()=>Math.random()));
+  let html='';
+  zones.forEach((z,zi)=>{
+    html+=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:8px;color:#7a8bad;min-width:70px;text-align:right;">${z}</span><div style="display:grid;grid-template-columns:repeat(8,1fr);gap:2px;flex:1;">`;
+    intensities[zi].forEach((v,hi)=>{
+      const r=Math.round(212*v+30*(1-v)), g=Math.round(0*v+122*(1-v)), b=Math.round(10*v+61*(1-v));
+      html+=`<div class="heat-cell" style="background:rgb(${r},${g},${b});opacity:${0.3+v*0.7};" title="${z} ${hours[hi]}:00 — ${(v*100).toFixed(0)}% anomaly density"></div>`;
+    });
+    html+='</div></div>';
+  });
+  html+='<div style="display:flex;align-items:center;gap:6px;margin-top:3px;"><span style="min-width:70px;"></span><div style="display:grid;grid-template-columns:repeat(8,1fr);gap:2px;flex:1;">';
+  hours.forEach(h=>{ html+=`<div class="heat-label">${h}h</div>`; });
+  html+='</div></div>';
+  document.getElementById('heatmap-container').innerHTML=html;
+}
+
+function renderForecast(){
+  const hours=['18:00','19:00','20:00','21:00','22:00','23:00','00:00','01:00','02:00','03:00','04:00','05:00'];
+  const vals=[284,302,312,308,295,278,261,248,235,229,241,258];
+  const max=Math.max(...vals);
+  const barsEl=document.getElementById('fcast-bars');
+  const labelsEl=document.getElementById('fcast-labels');
+  if(!barsEl||!labelsEl) return;
+  barsEl.innerHTML=vals.map((v,i)=>{
+    const h=Math.round((v/max)*60);
+    const col=v>305?'var(--danger)':v>280?'var(--warn)':'var(--accent)';
+    return `<div class="fcast-bar" style="height:${h}px;background:${col};margin-top:${60-h}px;" title="${hours[i]}: ${v} MW"></div>`;
+  }).join('');
+  labelsEl.style.cssText='display:flex;gap:3px;';
+  labelsEl.innerHTML=hours.map(h=>`<div class="fcast-label" style="flex:1;font-family:var(--mono);font-size:7px;text-align:center;color:#7a8bad;">${h}</div>`).join('');
+}
+
+// CITY CANVAS 3D
+const canvas = document.getElementById('city-canvas');
+let renderer, scene, camera, raycaster, mouse = new THREE.Vector2();
+let buildings = [], meters = [], meterGroup;
+let hoveredBuilding = null, dragging = false, lastMX = 0, lastMY = 0;
+let camYaw = 0, camPitch = -0.6, camPos = new THREE.Vector3(0, 25, 50);
+let camMode = 'orbit', orbAngle = 0;
+
+const LAYER_COLORS = {
+  grid: { h: 0xd4000a, m: 0xc45a00, l: 0x007a3d },
+  heat: { h: 0xb71c1c, m: 0xe64a19, l: 0xf57f17 },
+  theft: { h: 0xd4000a, m: 0xd4000a, l: 0x9e9e9e },
+  predict: { h: 0x5b21b6, m: 0x9333ea, l: 0x0047ff }
+};
+
+function initCityCanvas() {
+  if (renderer) return; // Already initialized
+  const W = canvas.offsetWidth, H = canvas.offsetHeight || 280;
+  
+  renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf0f4ff);
+  scene.fog = new THREE.FogExp2(0xd0dce8, 0.008);
+
+  camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 1000);
+  camera.position.copy(camPos);
+  camera.lookAt(0, 0, 0);
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+  scene.add(ambient);
+
+  const sun = new THREE.DirectionalLight(0xffffff, 1.0);
+  sun.position.set(50, 80, 30);
+  sun.castShadow = true;
+  scene.add(sun);
+
+  const gnd = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshStandardMaterial({ color: 0xe0eaf4 }));
+  gnd.rotation.x = -Math.PI / 2;
+  gnd.receiveShadow = true;
+  scene.add(gnd);
+
+  raycaster = new THREE.Raycaster();
+  meterGroup = new THREE.Group();
+  scene.add(meterGroup);
+
+  // Generate Buildings in 3D grid
+  buildings = [];
+  const grid = 10, gap = 15;
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < grid; c++) {
+      const h = 5 + Math.random() * 20;
+      const anomaly = Math.random() * 100;
+      const theft = Math.random() * 100;
+      const risk = anomaly > 70 ? 'h' : anomaly > 40 ? 'm' : 'l';
+      
+      const bd = {
+        meterId: 'MTR-' + String(Math.floor(Math.random() * 200)).padStart(4, '0'),
+        zone: ZONES_DATA[Math.floor(Math.random() * ZONES_DATA.length)].name,
+        load: Math.round(50 + Math.random() * 150),
+        voltage: Math.round(210 + Math.random() * 30),
+        anomaly: anomaly,
+        theft: theft,
+        risk: risk,
+        insight: 'AI analysis: Consumption pattern shows ' + (anomaly > 70 ? 'high probability of tampering or theft.' : 'normal variability.')
+      };
+
+      const baseColor = risk === 'h' ? 0x1a0508 : risk === 'm' ? 0x1a1205 : 0x051a0d;
+      const emColor = LAYER_COLORS.grid[risk];
+      
+      // Building geometry with glass-like material
+      const geom = new THREE.BoxGeometry(4, h, 4);
+      const mat = new THREE.MeshStandardMaterial({ 
+        color: baseColor, 
+        emissive: emColor, 
+        emissiveIntensity: 0.15,
+        roughness: 0.1,
+        metalness: 0.8
+      });
+      const mesh = new THREE.Mesh(geom, mat);
+      
+      mesh.position.set((c - grid/2) * gap, h/2, (r - 4) * gap);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData = { bd, risk, emColor, emInt: 0.15 };
+      
+      // Window Details - Improved neon highlights
+      const wireGeom = new THREE.BoxGeometry(4.1, h, 4.1);
+      const wireMat = new THREE.MeshBasicMaterial({ 
+        color: emColor, 
+        wireframe: true, 
+        transparent: true, 
+        opacity: 0.1 
+      });
+      const wireMesh = new THREE.Mesh(wireGeom, wireMat);
+      mesh.add(wireMesh);
+
+      scene.add(mesh);
+      buildings.push(mesh);
+    }
+  }
+
+  // Generate Meters
+  for (let i = 0; i < 30; i++) {
+    const status = Math.random() > .85 ? 'Fault' : Math.random() > .7 ? 'Alert' : 'Normal';
+    const color = status === 'Fault' ? 0xd4000a : status === 'Alert' ? 0xc45a00 : 0x0047ff;
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.5 }));
+    mesh.position.set((Math.random() - 0.5) * 150, 0.5, (Math.random() - 0.5) * 120);
+    meterGroup.add(mesh);
+  }
+
+  // Controls
+  canvas.addEventListener('mousedown', e => { 
+    if (e.target.closest('#nav-panel')) return;
+    dragging = true; camMode = 'free'; lastMX = e.clientX; lastMY = e.clientY; 
+  });
+  window.addEventListener('mouseup', () => dragging = false);
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    camYaw -= (e.clientX - lastMX) * 0.005;
+    camPitch = Math.max(-1.5, Math.min(0, camPitch - (e.clientY - lastMY) * 0.005));
+    lastMX = e.clientX; lastMY = e.clientY;
+  });
+  canvas.addEventListener('wheel', e => {
+    camMode = 'free';
+    const dir = new THREE.Vector3(Math.sin(camYaw) * Math.cos(camPitch), -Math.sin(camPitch), Math.cos(camYaw) * Math.cos(camPitch)).normalize();
+    camPos.addScaledVector(dir, -e.deltaY * 0.05);
+    camPos.y = Math.max(5, camPos.y);
+  }, { passive: true });
+
+  // Nav buttons
+  document.getElementById('nf').onclick = () => { camMode = 'free'; const fwd = new THREE.Vector3(Math.sin(camYaw), 0, Math.cos(camYaw)).negate(); camPos.addScaledVector(fwd, 10); };
+  document.getElementById('nl').onclick = () => { camMode = 'free'; const right = new THREE.Vector3(Math.cos(camYaw), 0, -Math.sin(camYaw)); camPos.addScaledVector(right, -10); };
+  document.getElementById('nrr').onclick = () => { camMode = 'free'; const right = new THREE.Vector3(Math.cos(camYaw), 0, -Math.sin(camYaw)); camPos.addScaledVector(right, 10); };
+  document.getElementById('nr').onclick = () => { camMode = 'orbit'; orbAngle = 0; camPos.set(0, 0, 0); };
+  document.getElementById('nzi').onclick = () => { camMode = 'free'; const dir = new THREE.Vector3(Math.sin(camYaw), -0.5, Math.cos(camYaw)).normalize(); camPos.addScaledVector(dir, 10); };
+  document.getElementById('nzo').onclick = () => { camMode = 'free'; const dir = new THREE.Vector3(Math.sin(camYaw), -0.5, Math.cos(camYaw)).normalize(); camPos.addScaledVector(dir, -10); };
+  document.getElementById('nup').onclick = () => { camMode = 'free'; camPos.y += 5; };
+  document.getElementById('ndn').onclick = () => { camMode = 'free'; camPos.y = Math.max(5, camPos.y - 5); };
+
+  document.querySelectorAll('.pb').forEach(b => {
+    b.onclick = () => {
+      camMode = b.dataset.p;
+      document.querySelectorAll('.pb').forEach(x => x.classList.remove('active')); b.classList.add('active');
+      if (camMode === 'top') { camPos.set(0, 0, 0); camYaw = 0; camPitch = -1.5; }
+      else if (camMode === 'street') { camPos.set(0, 1.8, 60); camYaw = Math.PI; camPitch = 0; }
+      else if (camMode === 'iso') { camPos.set(0, 0, 0); camYaw = Math.PI/4; camPitch = -0.6; }
+    };
+  });
+
+  animate();
+}
+
+function handleResize() {
+  if (!renderer) return;
+  const W = canvas.offsetWidth, H = canvas.offsetHeight || 280;
+  renderer.setSize(W, H);
+  camera.aspect = W / H;
+  camera.updateProjectionMatrix();
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  if (camMode === 'orbit') {
+    orbAngle += 0.002;
+    camera.position.set(Math.sin(orbAngle) * 80, 40, Math.cos(orbAngle) * 80);
+    camera.lookAt(0, 0, 0);
+  } else {
+    camera.position.set(
+      camPos.x + Math.sin(camYaw) * Math.cos(camPitch) * 100,
+      camPos.y - Math.sin(camPitch) * 100,
+      camPos.z + Math.cos(camYaw) * Math.cos(camPitch) * 100
+    );
+    camera.lookAt(camPos);
+  }
+  renderer.render(scene, camera);
+}
+
+function drawCity() { /* Handled by animate loop */ }
+
+function setLayer(layer, btn) {
+  currentLayer = layer;
+  if (btn) {
+    document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  const cfg = LAYER_COLORS[layer];
+  buildings.forEach(b => {
+    const col = cfg[b.userData.risk];
+    b.material.emissive.setHex(col);
+    if (b.children.length > 0) {
+      b.children[0].material.color.setHex(col);
+    }
+  });
+}
+
+// Interaction
+canvas.addEventListener('mousemove', e => {
+  if (dragging) return;
+  const rect = canvas.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(buildings);
+  const tip = document.getElementById('map-tip');
+  
+  if (hits.length) {
+    const obj = hits[0].object;
+    const bd = obj.userData.bd;
+    if (hoveredBuilding && hoveredBuilding !== obj) {
+      hoveredBuilding.material.emissiveIntensity = hoveredBuilding.userData.emInt;
+    }
+    hoveredBuilding = obj;
+    obj.material.emissiveIntensity = 0.8;
+    
+    tip.style.display = 'block';
+    tip.style.left = Math.min(e.clientX - rect.left + 15, rect.width - 175) + 'px';
+    tip.style.top = Math.max(e.clientY - rect.top - 120, 5) + 'px';
+    
+    document.getElementById('tip-id').textContent = bd.meterId;
+    document.getElementById('tip-zone').textContent = bd.zone;
+    document.getElementById('tip-load').textContent = bd.load + ' kW';
+    document.getElementById('tip-volt').textContent = bd.voltage + ' V';
+    document.getElementById('tip-anm').textContent = bd.anomaly.toFixed(0) + '/100';
+    document.getElementById('tip-theft').textContent = bd.theft.toFixed(0) + '%';
+    
+    const rp = document.getElementById('tip-risk-pill');
+    const rc = { h: { bg: 'var(--danger-l)', c: 'var(--danger)', t: 'HIGH RISK' }, m: { bg: 'var(--warn-l)', c: 'var(--warn)', t: 'MEDIUM RISK' }, l: { bg: 'var(--ok-l)', c: 'var(--ok)', t: 'LOW RISK' } };
+    rp.innerHTML = `<span class="risk-pill" style="background:${rc[bd.risk].bg};color:${rc[bd.risk].c};">${rc[bd.risk].t}</span>`;
+  } else {
+    tip.style.display = 'none';
+    if (hoveredBuilding) {
+      hoveredBuilding.material.emissiveIntensity = hoveredBuilding.userData.emInt;
+      hoveredBuilding = null;
+    }
+  }
+});
+
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(buildings);
+  if (hits.length) openBuilding(hits[0].object.userData.bd);
+});
+
+function openBuilding(bd){
+  document.getElementById('bpanel').classList.add('open');
+  document.getElementById('bp-id').textContent=bd.meterId;
+  document.getElementById('bp-zone').textContent=bd.zone;
+  document.getElementById('bs-anomaly').textContent=Math.round(bd.anomaly);
+  document.getElementById('bs-anomaly').style.color=bd.anomaly>70?'var(--danger)':bd.anomaly>40?'var(--warn)':'var(--ok)';
+  document.getElementById('bs-theft').textContent=Math.round(bd.theft)+'%';
+  document.getElementById('bs-theft').style.color=bd.theft>70?'var(--danger)':bd.theft>50?'var(--warn)':'var(--ok)';
+  document.getElementById('bs-load').textContent=bd.load+' kW';
+  document.getElementById('bs-volt').textContent=bd.voltage+' V';
+  document.getElementById('bs-insight').textContent=bd.insight;
+  drawBpGraph(bd);
+}
+
+function drawBpGraph(bd){
+  const c=document.getElementById('bp-graph'), ctx=c.getContext('2d');
+  const W=c.width, H=c.height;
+  ctx.clearRect(0,0,W,H);
+  const pts=Array.from({length:24},(_,i)=>H*0.8-Math.random()*H*0.5);
+  // Inject some anomalies
+  const anomIdx=Math.floor(Math.random()*20)+2;
+  pts[anomIdx]=H*0.95; pts[anomIdx+1]=H*0.9; // Dip
+  ctx.strokeStyle='rgba(0,71,255,0.15)'; ctx.lineWidth=0.5;
+  ctx.setLineDash([2,3]);
+  ctx.beginPath(); ctx.moveTo(0,H*0.5); ctx.lineTo(W,H*0.5); ctx.stroke();
+  ctx.setLineDash([]);
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'rgba(0,71,255,0.3)'); grad.addColorStop(1,'rgba(0,71,255,0)');
+  ctx.beginPath(); ctx.moveTo(0,pts[0]);
+  pts.forEach((y,i)=>ctx.lineTo(i/(pts.length-1)*W,y));
+  ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
+  ctx.fillStyle=grad; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0,pts[0]);
+  pts.forEach((y,i)=>ctx.lineTo(i/(pts.length-1)*W,y));
+  ctx.strokeStyle='var(--accent)'; ctx.lineWidth=1.5; ctx.stroke();
+  // Anomaly markers
+  ctx.beginPath(); ctx.arc(anomIdx/(pts.length-1)*W,pts[anomIdx],4,0,Math.PI*2);
+  ctx.fillStyle='var(--danger)'; ctx.fill();
+}
+
+function drawGauge(v){
+  const c=document.getElementById('gauge-canvas');
+  if(!c) return;
+  const ctx=c.getContext('2d'), W=c.width, H=c.height;
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2, cy=H*0.9, r=H*0.78;
+  ctx.beginPath(); ctx.arc(cx,cy,r,Math.PI,2*Math.PI);
+  ctx.strokeStyle='#e8eef5'; ctx.lineWidth=12; ctx.stroke();
+  // Color bands
+  const bands=[{end:.4,c:'#d4000a'},{end:.65,c:'#c45a00'},{end:1,c:'#007a3d'}];
+  let start=0;
+  bands.forEach(b=>{ctx.beginPath();ctx.arc(cx,cy,r,Math.PI+start*Math.PI,Math.PI+(b.end)*Math.PI);ctx.strokeStyle=b.c;ctx.lineWidth=6;ctx.globalAlpha=0.3;ctx.stroke();ctx.globalAlpha=1;start=b.end;});
+  ctx.beginPath(); ctx.arc(cx,cy,r,Math.PI,(1+v/100)*Math.PI);
+  ctx.strokeStyle=v>70?'#007a3d':v>50?'#c45a00':'#d4000a';
+  ctx.lineWidth=12; ctx.lineCap='round'; ctx.stroke();
+  document.getElementById('gauge-val').textContent=v+'%';
+}
+
+function drawSparkline(){
+  const c=document.getElementById('spark-main'); if(!c) return;
+  const ctx=c.getContext('2d'), W=c.offsetWidth||400, H=c.height;
+  c.width=W; ctx.clearRect(0,0,W,H);
+  const data=[180,190,210,240,280,312,295,270,255,248,260,284,310,318,305,285,270,290,312,318,295,270,248,235];
+  const max=Math.max(...data), min=Math.min(...data);
+  const scaleY=y=>H-4-((y-min)/(max-min))*(H-8);
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'rgba(0,71,255,0.25)'); grad.addColorStop(1,'rgba(0,71,255,0)');
+  ctx.beginPath(); ctx.moveTo(0,scaleY(data[0]));
+  data.forEach((v,i)=>ctx.lineTo(i/(data.length-1)*W,scaleY(v)));
+  ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
+  ctx.fillStyle=grad; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0,scaleY(data[0]));
+  data.forEach((v,i)=>ctx.lineTo(i/(data.length-1)*W,scaleY(v)));
+  ctx.strokeStyle='#0047ff'; ctx.lineWidth=2; ctx.stroke();
+  // Threshold line
+  const threshold=300; ctx.beginPath();
+  ctx.moveTo(0,scaleY(threshold)); ctx.lineTo(W,scaleY(threshold));
+  ctx.strokeStyle='rgba(212,0,10,0.4)'; ctx.lineWidth=1; ctx.setLineDash([3,3]); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>{ if(t.textContent.toLowerCase().includes(tab.substring(0,4))) t.classList.add('active'); });
+  document.getElementById('grid-section').style.display=tab==='grid'?'block':'none';
+  document.getElementById('predict-section').style.display=tab==='predict'?'block':'none';
+  document.getElementById('anomaly-section').style.display=tab==='anomaly'?'block':'none';
+  if(tab==='predict') { renderForecast(); setLayer('predict', document.querySelector('.layer-btn[onclick*="predict"]')); }
+  if(tab==='anomaly') { renderAnomalyTable(); setLayer('heat', document.querySelector('.layer-btn[onclick*="heat"]')); }
+  if(tab==='grid') { setLayer('grid', document.querySelector('.layer-btn[onclick*="grid"]')); }
+}
+
+// CLOCK
+function updateClock(){ document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-IN',{hour12:false})+' IST'; }
+setInterval(updateClock,1000); updateClock();
+
+// INIT
+function init(){
+  renderZones(); renderTheft(); renderAlerts();
+  renderHeatmap();
+  switchTab('grid');
+  initCityCanvas();
+  setTimeout(()=>{ drawSparkline(); drawGauge(76); },100);
+  // Simulate live updates
+  setInterval(()=>{
+    const n=document.getElementById('tc-alerts');
+    if(n){ const v=parseInt(n.textContent); n.textContent=Math.max(10,v+(Math.random()>.7?1:-1)); }
+  },4000);
+}
+window.addEventListener('resize',()=>{ drawSparkline(); handleResize(); });
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
+else init();
+</script>
+</body>
+</html>

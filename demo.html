@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GridSight AI — Smart City Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Share+Tech+Mono&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --blue:#1565c0;--blue2:#0d47a1;--blue-l:#e3f0ff;
+  --red:#c62828;--red-l:#ffebee;
+  --amber:#e65100;--amber-l:#fff3e0;
+  --green:#2e7d32;--green-l:#e8f5e9;
+  --purple:#6a1b9a;--purple-l:#f3e5f5;
+  --bg:#eef2f7;--panel:#ffffff;--panel2:#f8fafc;
+  --border:#d0dae8;--border2:#b8c8dc;
+  --text:#1a2535;--text2:#4a6080;--text3:#8aa0bc;
+  --shadow:0 2px 12px rgba(20,60,120,0.10);
+  --shadow2:0 4px 24px rgba(20,60,120,0.14);
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);}
+canvas#city{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;}
+body.ui-collapsed #hud{opacity:0;pointer-events:none;}
+body.ui-collapsed #toggle-ui .tog:not(#tog-all){display:none;}
+
+body.theme-dark{
+  --blue:#58a6ff;--blue2:#1f6feb;--blue-l:#14233b;
+  --red:#ff6b6b;--red-l:#3a1f24;
+  --amber:#ffb454;--amber-l:#3b2a12;
+  --green:#4cd471;--green-l:#173321;
+  --purple:#c297ff;--purple-l:#2b1f3d;
+  --bg:#0d1420;--panel:#121b2a;--panel2:#162234;
+  --border:#2a3a53;--border2:#355071;
+  --text:#d8e6ff;--text2:#a5bddb;--text3:#7390b2;
+  --shadow:0 2px 16px rgba(0,0,0,0.35);
+  --shadow2:0 8px 30px rgba(0,0,0,0.45);
+}
+
+/* === HUD LAYER === */
+#hud{position:fixed;top:0;left:0;width:100%;height:100%;z-index:10;pointer-events:none;}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+  box-shadow:var(--shadow);pointer-events:all;transition:opacity .3s,transform .3s;}
+.panel.hidden-ui{opacity:0;pointer-events:none;transform:scale(.97);}
+.ptitle{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2.5px;color:var(--blue);
+  text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.ptitle::before{content:'';width:10px;height:1.5px;background:var(--blue);display:block;}
+
+/* === TOPBAR === */
+#topbar{position:absolute;top:0;left:0;right:0;height:50px;
+  background:rgba(255,255,255,0.96);border-bottom:1px solid var(--border);
+  backdrop-filter:blur(16px);display:flex;align-items:center;padding:0 16px;gap:0;
+  pointer-events:all;box-shadow:0 2px 12px rgba(20,60,120,.08);z-index:20;
+  transition:transform .35s ease,opacity .35s;}
+#topbar.hidden-ui{transform:translateY(-100%);opacity:0;pointer-events:none;}
+#logo{font-family:'Orbitron',sans-serif;font-size:17px;font-weight:900;
+  color:var(--blue);letter-spacing:3px;margin-right:20px;flex-shrink:0;}
+#logo span{color:var(--amber);}
+.tstat{display:flex;flex-direction:column;align-items:center;padding:0 14px;
+  border-left:1px solid var(--border);}
+.tstat-v{font-family:'Share Tech Mono',monospace;font-size:15px;font-weight:600;}
+.tstat-l{font-size:8px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px;}
+#topright{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.live-pill{display:flex;align-items:center;gap:5px;background:var(--green-l);
+  border:1px solid #c8e6c9;border-radius:20px;padding:4px 10px;
+  font-size:9px;letter-spacing:1.5px;color:var(--green);text-transform:uppercase;}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);
+  animation:lp 1.8s infinite;}
+@keyframes lp{0%,100%{opacity:1}50%{opacity:.3}}
+#clock{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--blue);letter-spacing:1px;}
+
+/* === LEFT PANEL === */
+#lpanel{position:absolute;top:60px;left:14px;width:240px;
+  display:flex;flex-direction:column;gap:8px;
+  animation:slideL .5s ease both;transition:opacity .3s,transform .3s;}
+#lpanel.hidden-ui{opacity:0;pointer-events:none;transform:translateX(-20px);}
+@keyframes slideL{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+
+/* zone items */
+.zone-row{display:flex;align-items:center;gap:0;padding:5px 0;
+  border-bottom:1px solid var(--border);cursor:pointer;transition:all .2s;}
+.zone-row:last-child{border-bottom:none;}
+.zone-dot{width:7px;height:7px;border-radius:50%;margin-right:7px;flex-shrink:0;}
+.zone-name{font-size:11px;flex:1;color:var(--text);}
+.zone-bar-bg{width:56px;height:3px;background:#e8eef5;border-radius:2px;margin:0 6px;}
+.zone-bar{height:3px;border-radius:2px;}
+.zone-pct{font-family:'Share Tech Mono',monospace;font-size:10px;min-width:26px;text-align:right;}
+.r-h{color:var(--red)}.r-m{color:var(--amber)}.r-l{color:var(--green)}
+
+/* alerts */
+.alert-card{padding:7px 8px;border-radius:6px;margin-bottom:5px;border-left:3px solid;font-size:10.5px;line-height:1.4;animation:aIn .35s ease both;}
+@keyframes aIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1}}
+.ac-crit{border-color:var(--red);background:#fff5f5;}
+.ac-warn{border-color:var(--amber);background:#fffaf5;}
+.ac-info{border-color:var(--blue);background:#f5f8ff;}
+.a-meta{display:flex;justify-content:space-between;margin-top:3px;}
+.a-type{font-size:7.5px;letter-spacing:1px;text-transform:uppercase;font-family:'Orbitron',sans-serif;}
+.a-time{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);}
+.ac-crit .a-type{color:var(--red)}.ac-warn .a-type{color:var(--amber)}.ac-info .a-type{color:var(--blue)}
+
+/* === RIGHT PANEL === */
+#rpanel{position:absolute;top:60px;right:14px;width:218px;
+  display:flex;flex-direction:column;gap:8px;
+  animation:slideR .5s .1s ease both;transition:opacity .3s,transform .3s;}
+#rpanel.hidden-ui{opacity:0;pointer-events:none;transform:translateX(20px);}
+@keyframes slideR{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+
+.mrow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);}
+.mrow:last-child{border-bottom:none;}
+.mlabel{font-size:10px;color:var(--text2);}
+.mval{font-family:'Share Tech Mono',monospace;font-size:10.5px;}
+
+/* sparkline */
+canvas.spark{width:100%;height:36px;display:block;}
+
+/* heatmap */
+#heatmap{width:100%;height:64px;display:block;border-radius:4px;}
+
+/* === NAV CONTROLS === */
+#nav-panel{position:absolute;bottom:70px;right:14px;width:186px;
+  transition:opacity .3s,transform .3s;}
+#nav-panel.hidden-ui{opacity:0;pointer-events:none;transform:translateX(20px);}
+.nav-dpad{display:grid;grid-template-columns:repeat(3,32px);gap:3px;margin:8px auto;width:fit-content;}
+.nb{width:32px;height:32px;border-radius:5px;border:1px solid var(--border2);
+  background:var(--panel2);color:var(--blue);cursor:pointer;font-size:13px;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.nb:hover{background:var(--blue-l);border-color:var(--blue);}
+.nb:active{transform:scale(.92);}
+.nb.empty{background:none;border:none;pointer-events:none;}
+.nb.center{border-color:var(--blue2);background:var(--blue-l);}
+.preset-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px;}
+.pb{padding:5px 0;border-radius:4px;border:1px solid var(--border);background:var(--panel2);
+  font-size:9px;letter-spacing:1px;cursor:pointer;text-transform:uppercase;
+  color:var(--text2);text-align:center;transition:all .15s;font-family:'Inter',sans-serif;}
+.pb:hover,.pb.active{background:var(--blue-l);border-color:var(--blue);color:var(--blue);}
+.zoom-row{display:flex;gap:4px;margin-top:4px;}
+.zb{flex:1;padding:5px 0;border-radius:4px;border:1px solid var(--border);background:var(--panel2);
+  color:var(--blue);cursor:pointer;font-size:14px;text-align:center;transition:all .15s;}
+.zb:hover{background:var(--blue-l);border-color:var(--blue);}
+.nav-hint{font-size:8px;color:var(--text3);text-align:center;margin-top:5px;letter-spacing:.3px;}
+
+/* === BOTTOM BAR === */
+#bottom-bar{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  display:flex;gap:5px;pointer-events:all;transition:opacity .3s,transform .3s;}
+#bottom-bar.hidden-ui{opacity:0;pointer-events:none;transform:translateX(-50%) translateY(20px);}
+.lbtn{padding:7px 13px;border-radius:6px;border:1px solid var(--border2);
+  background:rgba(255,255,255,.92);font-size:9.5px;letter-spacing:1.5px;
+  cursor:pointer;text-transform:uppercase;color:var(--text2);
+  transition:all .2s;font-family:'Inter',sans-serif;backdrop-filter:blur(6px);}
+.lbtn:hover,.lbtn.active{background:var(--blue-l);border-color:var(--blue);color:var(--blue);}
+
+/* === AI BADGE === */
+#ai-badge{position:absolute;bottom:14px;left:14px;
+  display:flex;align-items:center;gap:9px;padding:8px 12px;
+  transition:opacity .3s,transform .3s;}
+#ai-badge.hidden-ui{opacity:0;pointer-events:none;transform:translateY(20px);}
+.ai-orb{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--blue);
+  display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;
+  font-size:8px;color:var(--blue);animation:orb 2.5s ease infinite;}
+@keyframes orb{0%,100%{box-shadow:0 0 0 0 rgba(21,101,192,.2)}60%{box-shadow:0 0 0 8px rgba(21,101,192,0)}}
+.ai-lbl{font-size:9px;color:var(--blue);letter-spacing:.5px;}
+.ai-sub{font-size:8.5px;color:var(--text3);}
+
+/* === HIDE/SHOW TOGGLE === */
+#toggle-ui{
+  position:fixed;top:14px;right:14px;z-index:50;pointer-events:all;
+  display:flex;gap:5px;
+}
+.tog{padding:6px 11px;border-radius:6px;border:1px solid var(--border2);
+  background:rgba(255,255,255,.92);font-size:9px;letter-spacing:1px;
+  cursor:pointer;color:var(--text2);transition:all .2s;backdrop-filter:blur(8px);
+  font-family:'Inter',sans-serif;text-transform:uppercase;}
+.tog:hover{background:var(--blue-l);border-color:var(--blue);color:var(--blue);}
+.tog.active{background:var(--blue-l);border-color:var(--blue);color:var(--blue);}
+
+/* === LEGEND === */
+#legend{position:absolute;top:60px;left:50%;transform:translateX(-50%);
+  display:flex;gap:6px;pointer-events:all;transition:opacity .3s;}
+#legend.hidden-ui{opacity:0;pointer-events:none;}
+.leg-chip{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:14px;
+  background:rgba(255,255,255,.9);border:1px solid var(--border);font-size:9px;
+  color:var(--text2);backdrop-filter:blur(6px);}
+.leg-dot{width:8px;height:8px;border-radius:50%;}
+
+/* === TOOLTIP === */
+#tip{position:fixed;background:#fff;border:1px solid var(--border2);
+  border-radius:8px;padding:10px 12px;font-size:11px;pointer-events:none;
+  z-index:50;display:none;min-width:170px;box-shadow:var(--shadow2);}
+.tip-title{font-family:'Orbitron',sans-serif;font-size:8.5px;color:var(--blue);
+  letter-spacing:1px;margin-bottom:6px;text-transform:uppercase;}
+.tip-row{display:flex;justify-content:space-between;gap:8px;color:var(--text2);margin:2px 0;font-size:10px;}
+.tip-val{font-family:'Share Tech Mono',monospace;color:var(--text);}
+.tip-risk{display:flex;align-items:center;gap:5px;margin-top:5px;padding-top:5px;border-top:1px solid var(--border);}
+.risk-badge{padding:2px 7px;border-radius:10px;font-size:9px;font-weight:600;letter-spacing:.5px;}
+
+/* === BUILDING DETAIL === */
+#bpanel{
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(.88);
+  opacity:0;pointer-events:none;width:440px;
+  background:#fff;border:1px solid var(--border2);border-radius:12px;
+  box-shadow:0 16px 64px rgba(20,60,120,.18);
+  transition:all .3s cubic-bezier(.34,1.5,.64,1);z-index:40;
+}
+#bpanel.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:all;}
+#bph{padding:13px 15px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;}
+#bp-id{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;color:var(--blue);}
+#bp-zone{font-size:10px;color:var(--text2);margin-top:2px;}
+#bp-close{background:none;border:1px solid var(--border);color:var(--text2);
+  width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:12px;transition:all .2s;}
+#bp-close:hover{border-color:var(--red);color:var(--red);}
+#bpb{padding:15px;}
+.bsg{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px;}
+.bs{background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 6px;text-align:center;}
+.bs-n{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;}
+.bs-l{font-size:7.5px;letter-spacing:1px;color:var(--text3);margin-top:3px;text-transform:uppercase;}
+.sl{font-size:8px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:6px;}
+#b-graph{width:100%;height:58px;display:block;margin-bottom:10px;}
+.aic{padding:10px;background:#f8faff;border:1px solid #dae5f8;border-radius:6px;margin-bottom:10px;}
+.aich{font-family:'Orbitron',sans-serif;font-size:7.5px;letter-spacing:1px;color:var(--amber);margin-bottom:4px;}
+.aicb{font-size:10.5px;line-height:1.5;color:var(--text);}
+.act-row{display:flex;gap:5px;}
+.abtn{padding:7px 0;border-radius:5px;border:1px solid;font-size:10px;
+  letter-spacing:1px;cursor:pointer;text-transform:uppercase;background:none;flex:1;transition:all .2s;}
+.ab-b{border-color:var(--blue);color:var(--blue)}.ab-b:hover{background:var(--blue-l);}
+.ab-r{border-color:var(--red);color:var(--red)}.ab-r:hover{background:var(--red-l);}
+.ab-a{border-color:var(--amber);color:var(--amber)}.ab-a:hover{background:var(--amber-l);}
+
+/* === METER MARKER POPUP === */
+#mpopup{position:fixed;background:#fff;border:1px solid var(--border2);
+  border-radius:8px;padding:10px 12px;pointer-events:none;
+  z-index:45;display:none;min-width:180px;box-shadow:var(--shadow2);}
+.mp-id{font-family:'Orbitron',sans-serif;font-size:8.5px;color:var(--blue);letter-spacing:1.5px;margin-bottom:6px;}
+.mp-row{display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin:2px 0;}
+.mp-val{font-family:'Share Tech Mono',monospace;color:var(--text);}
+
+/* ZONE OVERLAY canvas */
+#zone-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:3;}
+</style>
+</head>
+<body>
+
+<canvas id="city"></canvas>
+<canvas id="zone-canvas"></canvas>
+
+<!-- TOGGLE BUTTONS (always visible) -->
+<div id="toggle-ui">
+  <button class="tog active" id="tog-all">⊟ Hide UI</button>
+  <button class="tog" id="tog-left">Left</button>
+  <button class="tog" id="tog-right">Right</button>
+  <button class="tog" id="tog-nav">Nav</button>
+  <button class="tog" id="tog-bottom">Bottom</button>
+  <button class="tog" id="tog-legend">Legend</button>
+  <button class="tog" id="tog-theme">Dark</button>
+</div>
+
+<div id="tip">
+  <div class="tip-title" id="tip-title">—</div>
+  <div class="tip-row"><span>Meter ID</span><span class="tip-val" id="tip-meter">—</span></div>
+  <div class="tip-row"><span>Load</span><span class="tip-val" id="tip-load">—</span></div>
+  <div class="tip-row"><span>Voltage</span><span class="tip-val" id="tip-volt">—</span></div>
+  <div class="tip-row"><span>Anomaly Score</span><span class="tip-val" id="tip-anm">—</span></div>
+  <div class="tip-row"><span>Theft Probability</span><span class="tip-val" id="tip-theft">—</span></div>
+  <div class="tip-risk">
+    <span class="risk-badge" id="tip-badge">—</span>
+    <span style="font-size:9px;color:var(--text2)" id="tip-zone">—</span>
+  </div>
+</div>
+
+<div id="mpopup">
+  <div class="mp-id" id="mp-id">METER</div>
+  <div class="mp-row"><span>Status</span><span class="mp-val" id="mp-status">—</span></div>
+  <div class="mp-row"><span>Last Reading</span><span class="mp-val" id="mp-read">—</span></div>
+  <div class="mp-row"><span>Anomaly</span><span class="mp-val" id="mp-anm">—</span></div>
+  <div class="mp-row"><span>Voltage</span><span class="mp-val" id="mp-volt">—</span></div>
+</div>
+
+<div id="hud">
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div id="logo">GRID<span>SIGHT</span> AI</div>
+    <div class="tstat"><div class="tstat-v" style="color:var(--red)" id="tc-alerts">23</div><div class="tstat-l">Active Alerts</div></div>
+    <div class="tstat"><div class="tstat-v" style="color:var(--amber)" id="tc-health">Connecting...</div><div class="tstat-l">Grid Health</div></div>
+    <div class="tstat"><div class="tstat-v" style="color:var(--amber)">2,341 MW</div><div class="tstat-l">Total Load</div></div>
+    <div class="tstat"><div class="tstat-v" style="color:var(--purple)">7</div><div class="tstat-l">Theft Cases</div></div>
+    <div class="tstat"><div class="tstat-v" style="color:var(--blue)" id="tc-meters">4,218</div><div class="tstat-l">Online Meters</div></div>
+    <div id="topright">
+      <div class="live-pill"><div class="live-dot"></div>Live · AI Monitoring</div>
+      <div id="clock">00:00:00 IST</div>
+    </div>
+  </div>
+
+  <!-- LEGEND -->
+  <div id="legend">
+    <div class="leg-chip"><div class="leg-dot" style="background:#c62828"></div>High Risk</div>
+    <div class="leg-chip"><div class="leg-dot" style="background:#e65100"></div>Medium Risk</div>
+    <div class="leg-chip"><div class="leg-dot" style="background:#2e7d32"></div>Low Risk</div>
+    <div class="leg-chip"><div class="leg-dot" style="background:#1565c0"></div>Meters</div>
+    <div class="leg-chip" style="font-style:italic;font-size:8px;color:#8aa0bc">Click building for details</div>
+  </div>
+
+  <!-- LEFT -->
+  <div id="lpanel">
+    <div class="panel" style="padding:12px">
+      <div class="ptitle">Zone Risk Index</div>
+      <div id="zone-list"></div>
+    </div>
+    <div class="panel" style="padding:12px">
+      <div class="ptitle">AI Alert Feed</div>
+      <div id="alert-feed"></div>
+    </div>
+    <div class="panel" style="padding:12px">
+      <div class="ptitle">Theft Detection</div>
+      <div id="theft-feed"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div id="rpanel">
+    <div class="panel" style="padding:12px">
+      <div class="ptitle">Grid Health</div>
+      <canvas id="gauge" width="186" height="100" style="width:100%;display:block;margin-bottom:6px;"></canvas>
+      <div class="mrow"><span class="mlabel">Voltage Stability</span><span class="mval" style="color:var(--green)">98.2%</span></div>
+      <div class="mrow"><span class="mlabel">Transformer Load</span><span class="mval" style="color:var(--amber)">74.6%</span></div>
+      <div class="mrow"><span class="mlabel">Theft Detected</span><span class="mval" style="color:var(--red)">7 active</span></div>
+      <div class="mrow"><span class="mlabel">AI Confidence</span><span class="mval" style="color:var(--blue)">93.7%</span></div>
+      <div class="mrow"><span class="mlabel">Outage Forecast</span><span class="mval" style="color:var(--amber)">Medium risk</span></div>
+    </div>
+    <div class="panel" style="padding:12px">
+      <div class="ptitle">Consumption 24H</div>
+      <canvas id="spark-main" class="spark" width="190" height="36"></canvas>
+    </div>
+    <div class="panel" id="heatmap-card" style="padding:12px">
+      <div class="ptitle">Anomaly Distribution</div>
+      <canvas id="heatmap" width="190" height="64"></canvas>
+    </div>
+    <div class="panel" style="padding:12px">
+      <div class="ptitle">Zone Summary</div>
+      <div id="zone-summary"></div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div id="nav-panel" class="panel" style="padding:11px 12px;position:absolute;bottom:70px;right:14px;">
+    <div class="ptitle" style="margin-bottom:4px">Navigate</div>
+    <div class="nav-dpad">
+      <div class="nb empty"></div>
+      <button class="nb" id="nf">▲</button>
+      <div class="nb empty"></div>
+      <button class="nb" id="nl">◀</button>
+      <button class="nb center" id="nr" title="Reset">⌂</button>
+      <button class="nb" id="nrr">▶</button>
+      <button class="nb" id="ntu">↑</button>
+      <button class="nb" id="nb2">▼</button>
+      <button class="nb" id="ntd">↓</button>
+    </div>
+    <div class="zoom-row">
+      <button class="zb" id="nzi">+</button>
+      <button class="zb" id="nzo">−</button>
+      <button class="zb" id="nup" style="font-size:10px">▲Up</button>
+      <button class="zb" id="ndn" style="font-size:10px">▼Dn</button>
+    </div>
+    <div class="preset-row">
+      <button class="pb active" data-p="orbit">🔄 Orbit</button>
+      <button class="pb" data-p="top">🗺 Top</button>
+      <button class="pb" data-p="street">🏙 Street</button>
+      <button class="pb" data-p="iso">📐 Iso</button>
+    </div>
+    <div class="nav-hint">WASD · Drag · Scroll · Space/Shift</div>
+  </div>
+
+  <!-- BOTTOM -->
+  <div id="bottom-bar">
+    <button class="lbtn active" data-layer="grid">Grid</button>
+    <button class="lbtn" data-layer="heat">Heat Map</button>
+    <button class="lbtn" data-layer="theft">Theft Zones</button>
+    <button class="lbtn" data-layer="predict">AI Predict</button>
+    <button class="lbtn" data-layer="flow">Power Flow</button>
+    <button class="lbtn active" id="toggle-heatmap">Heatmap</button>
+    <button class="lbtn" id="toggle-meters">📍 Meters</button>
+    <button class="lbtn" id="toggle-zones">🗺 Risk Zones</button>
+  </div>
+
+  <!-- AI BADGE -->
+  <div id="ai-badge" class="panel">
+    <div class="ai-orb">AI</div>
+    <div><div class="ai-lbl">BESCOM Neural v2.1</div><div class="ai-sub">Online · 14ms latency</div></div>
+  </div>
+
+  <!-- BUILDING DETAIL -->
+  <div id="bpanel">
+    <div id="bph">
+      <div><div id="bp-id">—</div><div id="bp-zone">—</div></div>
+      <button id="bp-close">✕</button>
+    </div>
+    <div id="bpb">
+      <div class="bsg">
+        <div class="bs"><div class="bs-n" id="bs-score">—</div><div class="bs-l">Anomaly</div></div>
+        <div class="bs"><div class="bs-n" id="bs-theft">—</div><div class="bs-l">Theft %</div></div>
+        <div class="bs"><div class="bs-n" id="bs-load">—</div><div class="bs-l">Load kW</div></div>
+        <div class="bs"><div class="bs-n" id="bs-volt">—</div><div class="bs-l">Voltage</div></div>
+      </div>
+      <div class="sl">7-Day Consumption History</div>
+      <canvas id="b-graph"></canvas>
+      <div class="aic">
+        <div class="aich">⬡ AI Intelligence Summary</div>
+        <div class="aicb" id="bs-insight">—</div>
+      </div>
+      <div class="act-row">
+        <button class="abtn ab-b">Dispatch Audit</button>
+        <button class="abtn ab-a">View History</button>
+        <button class="abtn ab-r">Flag Alert</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ══════════════════════════════════════════
+// DATA & BACKEND INTEGRATION
+// ══════════════════════════════════════════
+const API_BASE = 'http://localhost:8000/api/v1';
+const WS_BASE = 'ws://localhost:8000/api/v1/realtime';
+
+let ZONES = [];
+let ALERTS = [];
+let THEFT_CASES = [];
+let bldgData = [];
+let METERS = [];
+
+let fetchRetryCount = 0;
+const MAX_RETRIES = 5;
+
+async function fetchSnapshots() {
+  const statusEl = document.getElementById('tc-health');
+  if (statusEl && statusEl.textContent === 'Offline') {
+    statusEl.textContent = 'Connecting...';
+    statusEl.style.color = 'var(--amber)';
+  }
+
+  try {
+    // 1. Fetch critical dashboard data first
+    const [summary, zones, alerts, theft] = await Promise.all([
+      fetch(`${API_BASE}/dashboard/summary`).then(r => { if(!r.ok) throw r; return r.json(); }),
+      fetch(`${API_BASE}/dashboard/zones`).then(r => { if(!r.ok) throw r; return r.json(); }),
+      fetch(`${API_BASE}/dashboard/alerts`).then(r => { if(!r.ok) throw r; return r.json(); }),
+      fetch(`${API_BASE}/dashboard/theft-cases`).then(r => { if(!r.ok) throw r; return r.json(); })
+    ]);
+
+    ZONES = zones;
+    ALERTS = alerts;
+    THEFT_CASES = theft;
+
+    updateUIFromSummary(summary);
+    renderZoneList();
+    renderAlertFeed();
+    renderTheftFeed();
+    renderZoneSummary();
+    drawHeatmap();
+    drawSpark();
+    
+    // Reset retry count on success
+    fetchRetryCount = 0;
+
+    // 2. Fetch 3D data (can be larger)
+    const [meters, buildings] = await Promise.all([
+      fetch(`${API_BASE}/meters`).then(r => r.json()),
+      fetch(`${API_BASE}/buildings`).then(r => r.json())
+    ]);
+
+    METERS = meters;
+    bldgData = buildings;
+
+    // Trigger 3D init if not done
+    if (!sceneInitialized && bldgData.length > 0) {
+      init3D();
+    } else if (sceneInitialized) {
+      updateAllMeshes();
+    }
+
+    // If still no buildings, retry sooner
+    if (bldgData.length === 0) {
+      setTimeout(fetchSnapshots, 3000);
+    }
+  } catch (err) {
+    console.error("Fetch failed:", err);
+    
+    if (fetchRetryCount < MAX_RETRIES) {
+      fetchRetryCount++;
+      const wait = Math.min(1000 * Math.pow(2, fetchRetryCount), 10000);
+      console.log(`Retrying in ${wait/1000}s... (Attempt ${fetchRetryCount})`);
+      setTimeout(fetchSnapshots, wait);
+    } else {
+      // Final fallback
+      const healthEl = document.getElementById('tc-health');
+      if (healthEl) {
+        healthEl.textContent = 'Offline';
+        healthEl.style.color = 'var(--red)';
+      }
+      ZONES = [{name:'System Offline',risk:'h',pct:0,color:'#666',cx:0,cz:0}];
+      renderZoneList();
+    }
+  }
+}
+
+function updateUIFromSummary(s) {
+  document.getElementById('tc-alerts').textContent = s.activeAlerts;
+  document.getElementById('tc-health').textContent = s.gridHealthPercent + '%';
+  document.getElementById('tc-meters').textContent = s.onlineMeters.toLocaleString();
+  
+  // New metrics from backend
+  const loadEl = document.querySelector('.tstat:nth-child(4) .tstat-v');
+  if (loadEl) loadEl.textContent = s.totalLoadMw.toLocaleString() + ' MW';
+  
+  const theftEl = document.querySelector('.tstat:nth-child(5) .tstat-v');
+  if (theftEl) theftEl.textContent = s.activeTheftCases;
+
+  const confEl = document.querySelector('.ai-lbl');
+  if (confEl) confEl.textContent = `BESCOM Neural v2.1 (${s.aiConfidencePercent}%)`;
+
+  drawGauge(s.gridHealthPercent);
+}
+
+let ws;
+function setupWebSocket() {
+  ws = new WebSocket(WS_BASE);
+  ws.onopen = () => {
+    console.log("Connected to GridSight Realtime");
+    ws.send(JSON.stringify({ type: 'client.hello', clientId: 'ui-client' }));
+  };
+  ws.onmessage = (e) => {
+    const evt = JSON.parse(e.data);
+    handleRealtimeEvent(evt);
+  };
+  ws.onclose = () => {
+    console.log("Disconnected. Retrying in 5s...");
+    setTimeout(setupWebSocket, 5000);
+  };
+}
+
+function handleRealtimeEvent(evt) {
+  const { eventType, payload } = evt;
+  if (eventType === 'meter.updated') {
+    const m = METERS.find(x => x.meterId === payload.meterId);
+    if (m) {
+      Object.assign(m, payload);
+      updateMeterMesh(m);
+    }
+  } else if (eventType === 'alert.new') {
+    ALERTS.unshift(payload);
+    if (ALERTS.length > 20) ALERTS.pop();
+    renderAlertFeed();
+    
+    // Update alert counter
+    const alertCount = document.getElementById('tc-alerts');
+    if (alertCount) {
+      const current = parseInt(alertCount.textContent) || 0;
+      alertCount.textContent = current + 1;
+    }
+  }
+}
+
+function updateMeterMesh(m) {
+  const mesh = meterMeshes.find(x => x.userData.meter.meterId === m.meterId);
+  if (mesh) {
+    const color = m.status === 'Fault' ? 0xc62828 : m.status === 'Alert' ? 0xe65100 : 0x1565c0;
+    mesh.material.color.setHex(color);
+    mesh.material.emissive.setHex(color);
+  }
+}
+
+let sceneInitialized = false;
+
+// ══════════════════════════════════════════
+// THREE.JS SETUP
+// ══════════════════════════════════════════
+const cnv = document.getElementById('city');
+const renderer = new THREE.WebGLRenderer({canvas:cnv, antialias:true, alpha:false});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xd0dce8);
+scene.fog = new THREE.FogExp2(0xc8d8e8, 0.008);
+
+const camera = new THREE.PerspectiveCamera(52, innerWidth/innerHeight, 0.1, 800);
+camera.position.set(0, 34, 60);
+camera.lookAt(0,0,0);
+
+// ── LIGHTS (good depth for light theme) ──
+const ambient = new THREE.AmbientLight(0xd8eaff, 2.0);
+scene.add(ambient);
+
+const sun = new THREE.DirectionalLight(0xfff5e0, 2.8);
+sun.position.set(50, 80, 30);
+sun.castShadow = true;
+sun.shadow.mapSize.width = 2048; sun.shadow.mapSize.height = 2048;
+sun.shadow.camera.near = 1; sun.shadow.camera.far = 300;
+sun.shadow.camera.left = -80; sun.shadow.camera.right = 80;
+sun.shadow.camera.top = 80; sun.shadow.camera.bottom = -80;
+sun.shadow.bias = -0.001;
+scene.add(sun);
+
+const fill = new THREE.DirectionalLight(0xc0d8ff, 0.9);
+fill.position.set(-40, 30, -30);
+scene.add(fill);
+
+const hemi = new THREE.HemisphereLight(0xe8f4ff, 0xa8b8c8, 0.7);
+scene.add(hemi);
+
+// ── GROUND ──
+const gndMat = new THREE.MeshStandardMaterial({color:0xb0c0cc, roughness:1, metalness:0});
+const gnd = new THREE.Mesh(new THREE.PlaneGeometry(300,300), gndMat);
+gnd.rotation.x = -Math.PI/2; gnd.position.y = -0.25;
+gnd.receiveShadow = true; scene.add(gnd);
+
+// Road grid
+const rmAt = new THREE.MeshStandardMaterial({color:0x8898a8, roughness:1});
+for(let i=-6;i<=6;i++){
+  const rh = new THREE.Mesh(new THREE.PlaneGeometry(130,.9), rmAt);
+  rh.rotation.x=-Math.PI/2; rh.position.set(0,-0.22,i*9.5);
+  rh.receiveShadow=true; scene.add(rh);
+  const rv = new THREE.Mesh(new THREE.PlaneGeometry(.9,130), rmAt);
+  rv.rotation.x=-Math.PI/2; rv.position.set(i*9.5,-0.22,0);
+  rv.receiveShadow=true; scene.add(rv);
+}
+
+// Pavement
+for(let i=-6;i<=6;i++){
+  for(let j=-6;j<=6;j++){
+    const bk = new THREE.Mesh(new THREE.PlaneGeometry(8.5,8.5),
+      new THREE.MeshStandardMaterial({color:(i+j)%2===0?0xb8c8d4:0xb0bfcc, roughness:1}));
+    bk.rotation.x=-Math.PI/2; bk.position.set(i*9.5,-0.23,j*9.5);
+    bk.receiveShadow=true; scene.add(bk);
+  }
+}
+
+// Subtle grid wireframe
+const gridMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(120,120,50,50),
+  new THREE.MeshBasicMaterial({color:0x1565c0,wireframe:true,opacity:0.025,transparent:true})
+);
+gridMesh.rotation.x=-Math.PI/2; gridMesh.position.y=-0.1; scene.add(gridMesh);
+
+function riskOf(bd){ return bd.anomaly>70?'h':bd.anomaly>40?'m':'l'; }
+
+// Building colors
+const B_COLORS_H = [0xd4c0c0, 0xcab8b8, 0xd8c4c4, 0xccbcbc];
+const B_COLORS_M = [0xcfcab8, 0xd4d0bc, 0xc8c4b0, 0xd0cab8];
+const B_COLORS_L = [0xb8cab8, 0xbcd0bc, 0xb4c8b8, 0xbccabc];
+const ROOF_COLORS = [0x8090a0,0x7888a0,0x8898a8,0x7890a8,0x8092a4];
+
+const buildings = [];
+let hoveredBuilding = null;
+const meterMeshes = [];
+let showMeters = true;
+const meterGroup = new THREE.Group();
+scene.add(meterGroup);
+
+function updateAllMeshes() {
+  // Simple update logic if we don't want to re-init everything
+  // For now, init3D clears and re-renders which is safer for sync
+  init3D();
+}
+
+// ── PARTICLES ──
+const PTOTAL=350;
+const pGeo=new THREE.BufferGeometry();
+const pPos=new Float32Array(PTOTAL*3);
+const pVel=new Float32Array(PTOTAL*3);
+for(let i=0;i<PTOTAL;i++){
+  pPos[i*3]=(Math.random()-.5)*110; pPos[i*3+1]=.3+Math.random()*1.5; pPos[i*3+2]=(Math.random()-.5)*110;
+  pVel[i*3]=(Math.random()-.5)*.07; pVel[i*3+2]=(Math.random()-.5)*.07;
+}
+pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
+const pMat=new THREE.PointsMaterial({color:0x1565c0,size:.2,transparent:true,opacity:.45,sizeAttenuation:true});
+const particles=new THREE.Points(pGeo,pMat);
+scene.add(particles);
+
+// ══════════════════════════════════════════
+// CAMERA FREE NAV
+// ══════════════════════════════════════════
+let camMode='orbit', orbAngle=0, orbRadius=60, orbHeight=34;
+let camPos=new THREE.Vector3(0,34,60), camYaw=0, camPitch=-.5;
+let dragging=false, lastMX=0, lastMY=0;
+const keys={};
+
+cnv.addEventListener('mousedown',e=>{dragging=true;lastMX=e.clientX;lastMY=e.clientY;});
+window.addEventListener('mouseup',()=>dragging=false);
+cnv.addEventListener('contextmenu',e=>e.preventDefault());
+window.addEventListener('mousemove',e=>{
+  if(!dragging) return;
+  camMode='free';
+  camYaw-=(e.clientX-lastMX)*.0035;
+  camPitch=Math.max(-Math.PI/2+.05,Math.min(Math.PI/2-.05,camPitch-(e.clientY-lastMY)*.0035));
+  lastMX=e.clientX;lastMY=e.clientY;
+});
+cnv.addEventListener('wheel',e=>{
+  e.preventDefault(); camMode='free';
+  const dir=new THREE.Vector3(Math.sin(camYaw)*Math.cos(camPitch),-Math.sin(camPitch),Math.cos(camYaw)*Math.cos(camPitch)).normalize();
+  camPos.addScaledVector(dir,-e.deltaY*.07);
+  camPos.y=Math.max(.5,camPos.y);
+},{passive:false});
+window.addEventListener('keydown',e=>{keys[e.code]=true;
+  if(['KeyW','KeyA','KeyS','KeyD','Space','ShiftLeft','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
+  if(['KeyW','KeyA','KeyS','KeyD'].includes(e.code)) camMode='free';
+});
+window.addEventListener('keyup',e=>{keys[e.code]=false;});
+
+function applyKeys(){
+  if(camMode!=='free') return;
+  const sp=.16;
+  const fwd=new THREE.Vector3(Math.sin(camYaw),0,Math.cos(camYaw)).negate();
+  const right=new THREE.Vector3(Math.cos(camYaw),0,-Math.sin(camYaw));
+  if(keys['KeyW']||keys['ArrowUp']) camPos.addScaledVector(fwd,sp);
+  if(keys['KeyS']||keys['ArrowDown']) camPos.addScaledVector(fwd,-sp);
+  if(keys['KeyA']||keys['ArrowLeft']) camPos.addScaledVector(right,-sp);
+  if(keys['KeyD']||keys['ArrowRight']) camPos.addScaledVector(right,sp);
+  if(keys['Space']) camPos.y+=sp;
+  if(keys['ShiftLeft']) camPos.y=Math.max(.5,camPos.y-sp);
+}
+
+function navMove(fwdD,yD,yawD,pitchD){
+  camMode='free';
+  const fwd=new THREE.Vector3(Math.sin(camYaw),0,Math.cos(camYaw)).negate();
+  const right=new THREE.Vector3(Math.cos(camYaw),0,-Math.sin(camYaw));
+  camPos.addScaledVector(fwd,fwdD*3.5);
+  camPos.y=Math.max(.5,camPos.y+yD*3.5);
+  camYaw+=yawD;
+  camPitch=Math.max(-Math.PI/2+.05,Math.min(Math.PI/2-.05,camPitch+pitchD));
+}
+
+const PRESETS={
+  orbit(){camMode='orbit';orbRadius=60;orbHeight=34;},
+  top(){camMode='free';camPos.set(0,90,.01);camYaw=0;camPitch=-Math.PI/2+.04;},
+  street(){camMode='free';camPos.set(0,1.8,45);camYaw=Math.PI;camPitch=0;},
+  iso(){camMode='free';camPos.set(55,40,55);camYaw=-Math.PI*.75;camPitch=-.42;},
+};
+
+document.getElementById('nf').onclick=()=>navMove(1,0,0,0);
+document.getElementById('nb2').onclick=()=>navMove(-1,0,0,0);
+document.getElementById('nl').onclick=()=>navMove(0,0,.2,0);
+document.getElementById('nrr').onclick=()=>navMove(0,0,-.2,0);
+document.getElementById('ntu').onclick=()=>navMove(0,0,0,.15);
+document.getElementById('ntd').onclick=()=>navMove(0,0,0,-.15);
+document.getElementById('nzi').onclick=()=>navMove(2,0,0,0);
+document.getElementById('nzo').onclick=()=>navMove(-2,0,0,0);
+document.getElementById('nup').onclick=()=>{camMode='free';camPos.y+=4;};
+document.getElementById('ndn').onclick=()=>{camMode='free';camPos.y=Math.max(.5,camPos.y-4);};
+document.getElementById('nr').onclick=()=>{
+  camMode='orbit';orbAngle=0;orbRadius=60;orbHeight=34;
+  document.querySelectorAll('.pb').forEach(b=>b.classList.remove('active'));
+  document.querySelector('[data-p="orbit"]').classList.add('active');
+};
+document.querySelectorAll('.pb').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.pb').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    PRESETS[b.dataset.p]();
+  });
+});
+
+// ══════════════════════════════════════════
+// LAYER CONTROLS
+// ══════════════════════════════════════════
+const LAYERS={
+  grid:{h:0xc62828,m:0xe65100,l:0x2e7d32,pC:0x1565c0,pO:.45},
+  heat:{h:0xb71c1c,m:0xe64a19,l:0xf57f17,pC:0xe64a19,pO:.3},
+  theft:{h:0xc62828,m:0xc62828,l:0x9e9e9e,pC:0xc62828,pO:.2},
+  predict:{h:0x6a1b9a,m:0x9c27b0,l:0x1565c0,pC:0x6a1b9a,pO:.4},
+  flow:{h:0x1565c0,m:0x1565c0,l:0x1565c0,pC:0x1565c0,pO:.9},
+};
+
+document.querySelectorAll('.lbtn[data-layer]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.lbtn[data-layer]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const cfg=LAYERS[btn.dataset.layer];
+    buildings.forEach(b=>{
+      const r=b.userData.risk;
+      b.material.emissive.setHex(cfg[r]);
+      b.material.emissiveIntensity=cfg[r]===0x1565c0?.03:r==='h'?.08:r==='m'?.04:.02;
+    });
+    pMat.color.setHex(cfg.pC); pMat.opacity=cfg.pO;
+  });
+});
+
+// Meter toggle
+let zonesVisible=true;
+let heatmapVisible=true;
+document.getElementById('toggle-meters').addEventListener('click',()=>{
+  showMeters=!showMeters;
+  meterGroup.visible=showMeters;
+  document.getElementById('toggle-meters').classList.toggle('active',showMeters);
+});
+document.getElementById('toggle-heatmap').addEventListener('click',()=>{
+  heatmapVisible=!heatmapVisible;
+  document.getElementById('heatmap-card').classList.toggle('hidden-ui',!heatmapVisible);
+  document.getElementById('toggle-heatmap').classList.toggle('active',heatmapVisible);
+});
+document.getElementById('toggle-zones').addEventListener('click',()=>{
+  zonesVisible=!zonesVisible;
+  document.getElementById('toggle-zones').classList.toggle('active',zonesVisible);
+  drawZoneOverlay();
+});
+
+// ══════════════════════════════════════════
+// RAYCASTING — buildings + meters
+// ══════════════════════════════════════════
+const raycaster=new THREE.Raycaster();
+const mouse3=new THREE.Vector2();
+const tip=document.getElementById('tip');
+const mpopup=document.getElementById('mpopup');
+
+window.addEventListener('mousemove',e=>{
+  if(dragging){tip.style.display='none';mpopup.style.display='none';return;}
+  mouse3.x=(e.clientX/innerWidth)*2-1;
+  mouse3.y=-(e.clientY/innerHeight)*2+1;
+  raycaster.setFromCamera(mouse3,camera);
+
+  // Check meters first
+  const mHits=raycaster.intersectObjects(meterMeshes);
+  if(mHits.length && showMeters){
+    tip.style.display='none';
+    const m=mHits[0].object.userData.meter;
+    mpopup.style.display='block';
+    mpopup.style.left=(e.clientX+14)+'px';
+    mpopup.style.top=(e.clientY-80)+'px';
+    document.getElementById('mp-id').textContent=m.id;
+    document.getElementById('mp-status').textContent=m.status;
+    document.getElementById('mp-status').style.color=m.status==='Fault'?'#c62828':m.status==='Alert'?'#e65100':'#2e7d32';
+    document.getElementById('mp-read').textContent=m.reading;
+    document.getElementById('mp-anm').textContent=m.anomaly;
+    document.getElementById('mp-volt').textContent=m.voltage+'V';
+    // unhover buildings
+    if(hoveredBuilding){
+      resetHover(hoveredBuilding);hoveredBuilding=null;
+    }
+    return;
+  }
+  mpopup.style.display='none';
+
+  // Check buildings
+  const bHits=raycaster.intersectObjects(buildings);
+  if(bHits.length){
+    const obj=bHits[0].object;
+    const bd=obj.userData.bd;
+    const r=obj.userData.risk;
+
+    if(hoveredBuilding && hoveredBuilding!==obj) resetHover(hoveredBuilding);
+    hoveredBuilding=obj;
+
+    // Color building bright on hover based on risk
+    const hoverEmissive={h:0xff0a2d,m:0xff7a00,l:0x00e676};
+    obj.material.emissive.setHex(hoverEmissive[r]);
+    obj.material.emissiveIntensity=.95;
+
+    tip.style.display='block';
+    tip.style.left=(e.clientX+14)+'px';
+    tip.style.top=Math.max(0,e.clientY-110)+'px';
+    document.getElementById('tip-title').textContent=bd.zone+' — '+bd.meterId;
+    document.getElementById('tip-meter').textContent=bd.meterId;
+    document.getElementById('tip-load').textContent=bd.load+' kW';
+    document.getElementById('tip-volt').textContent=bd.voltage+' V';
+    document.getElementById('tip-anm').textContent=bd.anomaly+'/100';
+    document.getElementById('tip-theft').textContent=bd.theft+'%';
+    const badge=document.getElementById('tip-badge');
+    badge.textContent=r==='h'?'⚠ HIGH RISK':r==='m'?'◆ MEDIUM RISK':'✓ LOW RISK';
+    badge.style.background=r==='h'?'#ffebee':r==='m'?'#fff3e0':'#e8f5e9';
+    badge.style.color=r==='h'?'#c62828':r==='m'?'#e65100':'#2e7d32';
+    document.getElementById('tip-zone').textContent=bd.zone;
+  } else {
+    tip.style.display='none';
+    if(hoveredBuilding){resetHover(hoveredBuilding);hoveredBuilding=null;}
+  }
+});
+
+function resetHover(obj){
+  obj.material.emissive.setHex(obj.userData.emColor);
+  obj.material.emissiveIntensity=obj.userData.emInt;
+}
+
+let clickPos={x:0,y:0};
+cnv.addEventListener('mousedown',e=>{clickPos={x:e.clientX,y:e.clientY};});
+cnv.addEventListener('mouseup',e=>{
+  if(Math.abs(e.clientX-clickPos.x)<4&&Math.abs(e.clientY-clickPos.y)<4){
+    mouse3.x=(e.clientX/innerWidth)*2-1;
+    mouse3.y=-(e.clientY/innerHeight)*2+1;
+    raycaster.setFromCamera(mouse3,camera);
+    const hits=raycaster.intersectObjects(buildings);
+    if(hits.length) openBuilding(hits[0].object.userData.bd);
+  }
+});
+
+function openBuilding(bd){
+  const r=riskOf(bd);
+  document.getElementById('bp-id').textContent=bd.meterId;
+  document.getElementById('bp-zone').textContent=bd.zone+' — Sector '+String.fromCharCode(65+bd.id%4);
+  const sc=document.getElementById('bs-score');
+  sc.textContent=bd.anomaly; sc.style.color=r==='h'?'#c62828':r==='m'?'#e65100':'#2e7d32';
+  const th=document.getElementById('bs-theft');
+  th.textContent=bd.theft+'%'; th.style.color=bd.theft>35?'#c62828':bd.theft>18?'#e65100':'#2e7d32';
+  document.getElementById('bs-load').textContent=bd.load;
+  document.getElementById('bs-volt').textContent=bd.voltage+'V';
+  document.getElementById('bs-insight').textContent = bd.insight;
+  drawBGraph(bd.meterId);
+  document.getElementById('bpanel').classList.add('open');
+}
+document.getElementById('bp-close').onclick=()=>document.getElementById('bpanel').classList.remove('open');
+
+// ══════════════════════════════════════════
+// ZONE OVERLAY (Canvas 2D over 3D)
+// ══════════════════════════════════════════
+const zCvs=document.getElementById('zone-canvas');
+const zCtx=zCvs.getContext('2d');
+zCvs.width=innerWidth; zCvs.height=innerHeight;
+
+function projectToScreen(wx,wz){
+  const v=new THREE.Vector3(wx,.5,wz);
+  v.project(camera);
+  return {x:(v.x*.5+.5)*innerWidth, y:(-.5*v.y+.5)*innerHeight, behind:v.z>1};
+}
+
+function drawZoneOverlay(){
+  zCtx.clearRect(0,0,zCvs.width,zCvs.height);
+  if(!zonesVisible) return;
+  ZONES.forEach(z=>{
+    const r=z.risk;
+    const cr=r==='h'?[198,40,40]:r==='m'?[230,81,0]:[46,125,50];
+    const cx=z.cx, cz=z.cz, radius=14;
+    // Draw a circle by projecting multiple points around perimeter
+    const pts=[];
+    for(let a=0;a<32;a++){
+      const ax=cx+radius*Math.cos(a/32*Math.PI*2);
+      const az=cz+radius*Math.sin(a/32*Math.PI*2);
+      const s=projectToScreen(ax,az);
+      if(!s.behind) pts.push(s);
+    }
+    if(pts.length<3) return;
+    zCtx.beginPath();
+    pts.forEach((p,i)=>i===0?zCtx.moveTo(p.x,p.y):zCtx.lineTo(p.x,p.y));
+    zCtx.closePath();
+    zCtx.fillStyle=`rgba(${cr[0]},${cr[1]},${cr[2]},0.08)`;
+    zCtx.fill();
+    zCtx.strokeStyle=`rgba(${cr[0]},${cr[1]},${cr[2]},0.35)`;
+    zCtx.lineWidth=2;
+    zCtx.setLineDash([6,4]);
+    zCtx.stroke();
+    zCtx.setLineDash([]);
+    // Label
+    const center=projectToScreen(cx,cz);
+    if(!center.behind){
+      zCtx.fillStyle=`rgba(${cr[0]},${cr[1]},${cr[2]},0.9)`;
+      zCtx.font='bold 10px Orbitron,monospace';
+      zCtx.textAlign='center';
+      zCtx.fillText(z.name,center.x,center.y);
+      zCtx.font='9px Inter,sans-serif';
+      zCtx.fillStyle=`rgba(${cr[0]},${cr[1]},${cr[2]},0.75)`;
+      zCtx.fillText('Risk '+z.pct+'%',center.x,center.y+13);
+    }
+  });
+}
+
+// ══════════════════════════════════════════
+// CHARTS
+// ══════════════════════════════════════════
+function drawGauge(val = 87.4){
+  const c=document.getElementById('gauge'),ctx=c.getContext('2d'),W=c.width,H=c.height;
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2,cy=H*.88,r=H*.7;
+  ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,2*Math.PI);
+  ctx.strokeStyle='#e0eaf4';ctx.lineWidth=10;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,(1 + val/100)*Math.PI);
+  const g=ctx.createLinearGradient(cx-r,0,cx+r,0);
+  g.addColorStop(0,'#c62828');g.addColorStop(.45,'#e65100');g.addColorStop(1,'#2e7d32');
+  ctx.strokeStyle=g;ctx.lineWidth=10;ctx.lineCap='round';ctx.stroke();
+  ctx.fillStyle='#1565c0';ctx.font='bold 16px Orbitron,monospace';
+  ctx.textAlign='center';ctx.fillText(val + '%',cx,cy-6);
+  ctx.fillStyle='#8aa0bc';ctx.font='7px Inter,sans-serif';
+  ctx.fillText('GRID HEALTH',cx,cy+7);
+}
+
+function drawSpark(){
+  const c=document.getElementById('spark-main'),ctx=c.getContext('2d'),W=c.width,H=c.height;
+  ctx.clearRect(0,0,W,H);
+  // Generate a stable trend based on ZONES health
+  const avgHealth = ZONES.reduce((a,b)=>a+b.pct,0)/ZONES.length || 50;
+  const seed = avgHealth / 100;
+  const d=Array.from({length:24},(_,i)=> 40 + 20 * Math.sin(i*0.4 + seed) + 10 * seed);
+  
+  const mx=Math.max(...d);
+  ctx.beginPath();
+  d.forEach((v,i)=>{const x=i/(d.length-1)*W,y=H-(v/mx)*H*.88-2;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.strokeStyle='#1565c0';ctx.lineWidth=1.5;ctx.stroke();
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'rgba(21,101,192,.22)');g.addColorStop(1,'rgba(21,101,192,.02)');
+  ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+}
+
+function drawHeatmap(){
+  const c=document.getElementById('heatmap'),ctx=c.getContext('2d'),W=c.width,H=c.height;
+  ctx.clearRect(0,0,W,H);
+  const N=ZONES.length || 7,rows=4,cw=W/N,ch=H/rows;
+  ZONES.forEach((z,zi)=>{
+    for(let r=0;r<rows;r++){
+      // Deterministic "randomness" for the heatmap based on zone name
+      const seed = (z.name.charCodeAt(0) + r) % 10 / 10;
+      const v = z.pct/100 * (0.6 + seed * 0.4);
+      const cr=z.risk==='h'?[198,40,40]:z.risk==='m'?[230,81,0]:[46,125,50];
+      ctx.fillStyle=`rgba(${cr[0]},${cr[1]},${cr[2]},${.1+v*.55})`;
+      ctx.beginPath();ctx.roundRect?ctx.roundRect(zi*cw+1,r*ch+1,cw-2,ch-2,2):ctx.rect(zi*cw+1,r*ch+1,cw-2,ch-2);
+      ctx.fill();
+    }
+  });
+}
+
+function renderZoneList() {
+  const zl = document.getElementById('zone-list');
+  zl.innerHTML = '';
+  ZONES.forEach(z => {
+    zl.innerHTML += `<div class="zone-row">
+      <div class="zone-dot" style="background:${z.color}"></div>
+      <span class="zone-name">${z.name}</span>
+      <div class="zone-bar-bg"><div class="zone-bar" style="width:${z.pct}%;background:${z.color}"></div></div>
+      <span class="zone-pct r-${z.risk}">${z.pct}%</span>
+    </div>`;
+  });
+}
+
+function renderAlertFeed() {
+  const af = document.getElementById('alert-feed');
+  af.innerHTML = '';
+  ALERTS.forEach((a, i) => {
+    const d = document.createElement('div');
+    d.className = `alert-card ac-${a.type}`; d.style.animationDelay = (i * .07) + 's';
+    d.innerHTML = `${a.message}<div class="a-meta"><span class="a-type">${a.type === 'crit' ? 'Critical' : a.type === 'warn' ? 'Warning' : 'Info'}</span><span class="a-time">${a.ago || 'now'}</span></div>`;
+    af.appendChild(d);
+  });
+}
+
+function renderTheftFeed() {
+  const tf = document.getElementById('theft-feed');
+  tf.innerHTML = '';
+  THEFT_CASES.forEach(t => {
+    tf.innerHTML += `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:10.5px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+        <span style="font-family:'Share Tech Mono',monospace;color:var(--red);font-size:10px">${t.id}</span>
+        <span style="background:#ffebee;color:#c62828;font-size:8px;padding:2px 6px;border-radius:10px;font-weight:600">${t.status}</span>
+      </div>
+      <div style="color:var(--text2)">${t.zone}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:2px;color:var(--text3);font-size:9.5px">
+        <span>${t.estLoss}</span><span>${t.days}d active</span>
+      </div>
+    </div>`;
+  });
+}
+
+function renderZoneSummary() {
+  const zs = document.getElementById('zone-summary');
+  zs.innerHTML = '';
+  ZONES.forEach(z => {
+    zs.innerHTML += `<div class="mrow">
+      <span class="mlabel" style="display:flex;align-items:center;gap:5px">
+        <div class="leg-dot" style="width:6px;height:6px;background:${z.color}"></div>${z.name}
+      </span>
+      <span class="mval">${z.pct}%</span>
+    </div>`;
+  });
+}
+
+function drawBGraph(meterId){
+  const c=document.getElementById('b-graph');
+  c.width=c.offsetWidth||406; c.height=58;
+  const ctx=c.getContext('2d'),W=c.width,H=c.height;
+  ctx.clearRect(0,0,W,H);
+  
+  // Use meterId to seed a deterministic graph
+  const seed = meterId ? meterId.split('').reduce((a,b)=>a+b.charCodeAt(0),0) : 42;
+  const d=Array.from({length:28},(_, i)=> 15 + 30 * Math.abs(Math.sin((seed + i) * 0.3)));
+  
+  const mx=Math.max(...d);
+  d.forEach((v,i)=>{
+    const x=i/d.length*W,bw=(W/d.length)-1.5,bh=(v/mx)*(H-10);
+    ctx.fillStyle=v>mx*.75?'rgba(198,40,40,.2)':v>mx*.5?'rgba(230,81,0,.18)':'rgba(21,101,192,.14)';
+    ctx.fillRect(x,H-bh-2,bw,bh);
+  });
+  ctx.beginPath();
+  d.forEach((v,i)=>{const x=i/(d.length-1)*W,y=H-(v/mx)*(H-10)-2;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.strokeStyle='#1565c0';ctx.lineWidth=1.5;ctx.stroke();
+  const si=Math.floor(d.length*.6);
+  ctx.beginPath();ctx.arc(si/(d.length-1)*W,H-(d[si]/mx)*(H-10)-2,3.5,0,Math.PI*2);
+  ctx.fillStyle='#c62828';ctx.fill();
+}
+
+
+// ══════════════════════════════════════════
+// HIDE / SHOW UI
+// ══════════════════════════════════════════
+const uiPanels={
+  all:['topbar','lpanel','rpanel','bottom-bar','ai-badge','legend'],
+  left:['lpanel'],right:['rpanel'],nav:['nav-panel'],bottom:['bottom-bar','ai-badge'],legend:['legend'],
+};
+const togStates={all:true,left:true,right:true,nav:true,bottom:true,legend:true};
+
+function toggleSection(key){
+  if(key==='all'){
+    togStates.all=!togStates.all;
+    document.body.classList.toggle('ui-collapsed',!togStates.all);
+    const allBtn=document.getElementById('tog-all');
+    allBtn?.classList.toggle('active',togStates.all);
+    if(allBtn) allBtn.textContent=togStates.all?'⊟ Hide UI':'⊞ Show UI';
+    return;
+  }
+  togStates[key]=!togStates[key];
+  const ids=uiPanels[key]||[];
+  ids.forEach(id=>{
+    document.getElementById(id)?.classList.toggle('hidden-ui',!togStates[key]);
+  });
+  // nav-panel special
+  if(key==='nav') document.getElementById('nav-panel')?.classList.toggle('hidden-ui',!togStates[key]);
+  const btn=document.getElementById('tog-'+key);
+  if(btn){
+    btn.classList.toggle('active',togStates[key]);
+    if(key==='all') btn.textContent=togStates[key]?'⊟ Hide UI':'⊞ Show UI';
+  }
+}
+
+document.getElementById('tog-all').addEventListener('click',()=>toggleSection('all'));
+document.getElementById('tog-left').addEventListener('click',()=>toggleSection('left'));
+document.getElementById('tog-right').addEventListener('click',()=>toggleSection('right'));
+document.getElementById('tog-nav').addEventListener('click',()=>toggleSection('nav'));
+document.getElementById('tog-bottom').addEventListener('click',()=>toggleSection('bottom'));
+document.getElementById('tog-legend').addEventListener('click',()=>toggleSection('legend'));
+
+let activeTheme='light';
+function applyTheme(theme){
+  activeTheme=theme;
+  const dark=theme==='dark';
+  document.body.classList.toggle('theme-dark',dark);
+  const tbtn=document.getElementById('tog-theme');
+  if(tbtn){
+    tbtn.classList.toggle('active',dark);
+    tbtn.textContent=dark?'Light':'Dark';
+  }
+
+  if(dark){
+    scene.background=new THREE.Color(0x0e1724);
+    scene.fog=new THREE.FogExp2(0x111c2c,0.0105);
+    ambient.color.setHex(0x9bb3d1); ambient.intensity=0.95;
+    sun.color.setHex(0xb9d4ff); sun.intensity=1.7;
+    fill.color.setHex(0x6f95bf); fill.intensity=0.55;
+    hemi.color.setHex(0x2a3d54); hemi.groundColor.setHex(0x111827); hemi.intensity=0.5;
+    gndMat.color.setHex(0x1a2633);
+    rmAt.color.setHex(0x263444);
+    gridMesh.material.color.setHex(0x4fa2ff);
+    gridMesh.material.opacity=0.042;
+  } else {
+    scene.background=new THREE.Color(0xd0dce8);
+    scene.fog=new THREE.FogExp2(0xc8d8e8,0.008);
+    ambient.color.setHex(0xd8eaff); ambient.intensity=2.0;
+    sun.color.setHex(0xfff5e0); sun.intensity=2.8;
+    fill.color.setHex(0xc0d8ff); fill.intensity=0.9;
+    hemi.color.setHex(0xe8f4ff); hemi.groundColor.setHex(0xa8b8c8); hemi.intensity=0.7;
+    gndMat.color.setHex(0xb0c0cc);
+    rmAt.color.setHex(0x8898a8);
+    gridMesh.material.color.setHex(0x1565c0);
+    gridMesh.material.opacity=0.025;
+  }
+  gndMat.needsUpdate=true;
+  rmAt.needsUpdate=true;
+  gridMesh.material.needsUpdate=true;
+}
+
+document.getElementById('tog-theme').addEventListener('click',()=>{
+  applyTheme(activeTheme==='light'?'dark':'light');
+});
+
+// Clock
+function tick(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata', hour12:false})+' IST';}
+setInterval(tick,1000);tick();
+
+// ══════════════════════════════════════════
+// STARTUP & 3D INIT
+// ══════════════════════════════════════════
+window.addEventListener('load', () => {
+  fetchSnapshots();
+  setupWebSocket();
+});
+
+function init3D() {
+  if (sceneInitialized) return;
+  sceneInitialized = true;
+
+  // Clear scene
+  meterGroup.clear();
+  buildings.forEach(b => scene.remove(b));
+  buildings.length = 0;
+
+  // ── BUILDINGS ──
+  for(let i=0; i < bldgData.length; i++){
+    const bd=bldgData[i];
+    const risk=riskOf(bd);
+    const cx=bd.x, cz=bd.z;
+    const w=bd.width || 2, d=bd.depth || 2, h=bd.height || 10;
+
+    const baseColor = risk==='h'?B_COLORS_H[i%4]:risk==='m'?B_COLORS_M[i%4]:B_COLORS_L[i%4];
+    const emColor = risk==='h'?0xc62828:risk==='m'?0xe65100:0x2e7d32;
+    const emInt = risk==='h'?0.07:risk==='m'?0.04:0.02;
+
+    const mat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(baseColor),
+      emissive: new THREE.Color(emColor),
+      emissiveIntensity: emInt,
+      roughness: 0.68,
+      metalness: 0.08,
+    });
+
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+    mesh.position.set(cx, h/2, cz);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData = {bd, risk, baseColor, emColor, emInt, baseEmInt:emInt};
+    scene.add(mesh);
+    buildings.push(mesh);
+
+    // Roof
+    const roofColor = ROOF_COLORS[i%ROOF_COLORS.length];
+    const roofMat = new THREE.MeshStandardMaterial({color:roofColor,roughness:.9,metalness:.05});
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(w+.08,.08,d+.08), roofMat);
+    roof.position.set(cx, h+.04, cz);
+    roof.castShadow = true;
+    scene.add(roof);
+  }
+
+  // ── METERS ──
+  meterMeshes.length = 0;
+  METERS.forEach(m=>{
+    const color = m.status==='Fault'?0xc62828:m.status==='Alert'?0xe65100:0x1565c0;
+    const geo = new THREE.SphereGeometry(.32, 8, 8);
+    const mat = new THREE.MeshStandardMaterial({color, roughness:.4, metalness:.2,
+      emissive:new THREE.Color(color), emissiveIntensity:.25});
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(m.x, .5, m.z);
+    mesh.userData = {meter:m};
+    meterGroup.add(mesh);
+    meterMeshes.push(mesh);
+
+    // Pole
+    const pole = new THREE.Mesh(
+      new THREE.CylinderGeometry(.04,.04,.5,6),
+      new THREE.MeshStandardMaterial({color:0x607080,roughness:.9})
+    );
+    pole.position.set(m.x,.25,m.z);
+    meterGroup.add(pole);
+  });
+  
+  drawZoneOverlay();
+  applyTheme('light');
+}
+
+// ══════════════════════════════════════════
+// ANIMATION LOOP
+// ══════════════════════════════════════════
+let frame=0;
+function animate(){
+  requestAnimationFrame(animate);
+  frame++;
+  applyKeys();
+
+  if(camMode==='orbit'){
+    orbAngle+=.0015;
+    camera.position.x=Math.sin(orbAngle)*orbRadius;
+    camera.position.z=Math.cos(orbAngle)*orbRadius;
+    camera.position.y=orbHeight;
+    camera.lookAt(0,0,0);
+  } else {
+    camera.position.copy(camPos);
+    camera.setRotationFromEuler(new THREE.Euler(camPitch,camYaw,0,'YXZ'));
+  }
+
+  // Particle flow
+  const pp=particles.geometry.attributes.position;
+  for(let i=0;i<PTOTAL;i++){
+    pp.array[i*3]+=pVel[i*3]; pp.array[i*3+2]+=pVel[i*3+2];
+    if(Math.abs(pp.array[i*3])>58) pVel[i*3]*=-1;
+    if(Math.abs(pp.array[i*3+2])>58) pVel[i*3+2]*=-1;
+  }
+  pp.needsUpdate=true;
+
+  // Pulse high risk
+  if(frame%3===0){
+    buildings.forEach(b=>{
+      if(b.userData.risk==='h' && b!==hoveredBuilding){
+        const p=.5+.5*Math.sin(frame*.055+b.userData.bd.id*.28);
+        b.material.emissiveIntensity=.04+.06*p;
+      }
+    });
+  }
+  gridMesh.material.opacity=.018+.008*Math.sin(frame*.018);
+
+  // Redraw zone overlay every 4 frames
+  if(frame%4===0) drawZoneOverlay();
+
+  renderer.render(scene,camera);
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+drawGauge();
+drawSpark();
+drawHeatmap();
+renderZoneSummary();
+animate();
+
+window.addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+  zCvs.width=innerWidth; zCvs.height=innerHeight;
+});
+</script>
+</body>
+</html>

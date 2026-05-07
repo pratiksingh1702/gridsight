@@ -1,0 +1,5 @@
+/* Global resets are handled in component-specific CSS to ensure pixel perfection */
+body {
+  margin: 0;
+  padding: 0;
+}

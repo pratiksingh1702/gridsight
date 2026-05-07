@@ -1,0 +1,3008 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GridSight — AI for Smart Meter Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Serif+4:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --ink: #0a0f0d;
+      --paper: #f2f0e8;
+      --grid: #e8e4d8;
+      --accent: #00b87c;
+      --accent2: #ff5c3a;
+      --accent3: #f5c842;
+      --muted: #6b7a72;
+      --card: #ffffff;
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-body: 'Source Serif 4', serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06), 0 12px 32px rgba(0, 0, 0, 0.05);
+      --shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.05), 0 12px 36px rgba(0, 0, 0, 0.12), 0 32px 64px rgba(0, 0, 0, 0.08);
+      --shadow-btn: 0 1px 3px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+      --shadow-btn-hover: 0 4px 16px rgba(0, 184, 124, 0.35), 0 8px 32px rgba(0, 184, 124, 0.15);
+      --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.65;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+    /* ── NAV ─────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 56px;
+      background: rgba(242, 240, 232, 0.92);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border-bottom: 1px solid rgba(232, 228, 216, 0.8);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6), 0 2px 16px rgba(0, 0, 0, 0.04);
+    }
+
+    .nav-logo {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+      color: var(--ink);
+      text-decoration: none;
+      transition: opacity 0.2s
+    }
+
+    .nav-logo:hover {
+      opacity: 0.75
+    }
+
+    .nav-logo span {
+      color: var(--accent)
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none
+    }
+
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      position: relative;
+      padding-bottom: 2px;
+      transition: color 0.2s var(--ease-out-quart)
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: var(--accent);
+      transition: width 0.3s var(--ease-out-expo)
+    }
+
+    .nav-links a:hover {
+      color: var(--ink)
+    }
+
+    .nav-links a:hover::after {
+      width: 100%
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px
+    }
+
+    .nav-cta {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 20px;
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: var(--shadow-btn);
+      transition: background 0.25s var(--ease-out-quart), transform 0.2s var(--ease-out-expo), box-shadow 0.25s var(--ease-out-quart)
+    }
+
+    .nav-cta:hover {
+      background: var(--accent);
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: var(--shadow-btn-hover)
+    }
+
+    /* Hamburger */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      width: 36px;
+      height: 36px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px
+    }
+
+    .hamburger span {
+      display: block;
+      height: 1.5px;
+      background: var(--ink);
+      border-radius: 2px;
+      transition: transform 0.3s var(--ease-out-expo), opacity 0.2s
+    }
+
+    .hamburger.open span:nth-child(1) {
+      transform: translateY(6.5px) rotate(45deg)
+    }
+
+    .hamburger.open span:nth-child(2) {
+      opacity: 0;
+      transform: scaleX(0)
+    }
+
+    .hamburger.open span:nth-child(3) {
+      transform: translateY(-6.5px) rotate(-45deg)
+    }
+
+    /* Mobile menu */
+    .mobile-menu {
+      position: fixed;
+      top: 56px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 99;
+      background: rgba(242, 240, 232, 0.98);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transform: translateY(-100%);
+      opacity: 0;
+      transition: transform 0.45s var(--ease-out-expo), opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .mobile-menu.open {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: all
+    }
+
+    .mobile-menu ul {
+      list-style: none;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+      padding: 0 32px
+    }
+
+    .mobile-menu a {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--ink);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+      display: block;
+      padding: 10px 0;
+      transition: color 0.2s
+    }
+
+    .mobile-menu a:hover {
+      color: var(--accent)
+    }
+
+    .mobile-menu .mobile-cta {
+      font-size: 18px;
+      margin-top: 20px;
+      background: var(--ink);
+      color: var(--paper) !important;
+      padding: 14px 36px !important;
+      border-radius: 4px;
+      display: inline-block !important;
+      width: auto !important
+    }
+
+    /* ── HERO ────────────────────────────────────── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 80px 40px;
+      overflow: hidden;
+    }
+
+    .hero-layout {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 60px;
+      align-items: center;
+      width: 100%;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    .hero-copy {
+      max-width: 720px;
+    }
+
+    .hero-visual {
+       position: relative;
+       display: flex;
+       flex-direction: column;
+       gap: 20px;
+       opacity: 0;
+       animation: hero-in 1s var(--ease-out-expo) 0.6s forwards;
+     }
+
+     .hero-visual::before {
+       content: '';
+       position: absolute;
+       inset: -50px;
+       background: radial-gradient(circle at center, rgba(0, 184, 124, 0.12) 0%, transparent 70%);
+       z-index: -1;
+       filter: blur(40px);
+       animation: pulse 4s ease-in-out infinite;
+     }
+
+     @keyframes pulse {
+       0%, 100% { transform: scale(1); opacity: 0.5; }
+       50% { transform: scale(1.1); opacity: 0.8; }
+     }
+
+     .hero-eyebrow {
+       font-family: var(--font-mono);
+       font-size: 11px;
+       font-weight: 400;
+       color: var(--accent);
+       letter-spacing: 0.14em;
+       text-transform: uppercase;
+       margin-bottom: 24px;
+       display: flex;
+       align-items: center;
+       gap: 10px;
+       opacity: 0;
+       animation: hero-in 0.8s var(--ease-out-expo) 0.1s forwards
+     }
+
+     .hero-eyebrow::before {
+       content: '';
+       display: block;
+       width: 32px;
+       height: 1px;
+       background: var(--accent)
+     }
+
+     .hero-headline {
+       font-family: var(--font-display);
+       font-size: clamp(56px, 8vw, 96px);
+       font-weight: 800;
+       line-height: 0.93;
+       letter-spacing: -3.5px;
+       color: var(--ink);
+       margin-bottom: 32px;
+       opacity: 0;
+       animation: hero-in 0.9s var(--ease-out-expo) 0.2s forwards
+     }
+
+     .hero-headline .hl {
+       background: linear-gradient(135deg, #00b87c 0%, #00d68f 50%, #00a86e 100%);
+       -webkit-background-clip: text;
+       -webkit-text-fill-color: transparent;
+       background-clip: text;
+       display: inline-block
+     }
+
+     .hero-headline .hl2 {
+       background: linear-gradient(135deg, #ff5c3a 0%, #ff7a5c 50%, #e84a28 100%);
+       -webkit-background-clip: text;
+       -webkit-text-fill-color: transparent;
+       background-clip: text;
+       display: inline-block
+     }
+
+     .hero-sub {
+       font-size: 17px;
+       font-weight: 300;
+       color: var(--muted);
+       max-width: 520px;
+       line-height: 1.8;
+       margin-bottom: 48px;
+       opacity: 0;
+       animation: hero-in 0.9s var(--ease-out-expo) 0.35s forwards
+     }
+
+     .hero-actions {
+       display: flex;
+       gap: 16px;
+       align-items: center;
+       flex-wrap: wrap;
+       opacity: 0;
+       animation: hero-in 0.9s var(--ease-out-expo) 0.5s forwards
+     }
+
+    /* User Flow Section */
+    .user-flow {
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 184, 124, 0.1);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: var(--shadow-card);
+      position: relative;
+    }
+
+    .flow-step {
+      display: flex;
+      gap: 20px;
+      position: relative;
+      padding-bottom: 32px;
+    }
+
+    .flow-step:last-child {
+      padding-bottom: 0;
+    }
+
+    .flow-step::before {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 40px;
+      bottom: -10px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+      opacity: 0.3;
+    }
+
+    .flow-step:last-child::before {
+      display: none;
+    }
+
+    .flow-icon {
+      width: 40px;
+      height: 40px;
+      background: white;
+      border: 1px solid var(--grid);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      z-index: 1;
+    }
+
+    .flow-icon svg {
+      width: 20px;
+      height: 20px;
+      color: var(--accent);
+    }
+
+    .flow-content h4 {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--ink);
+    }
+
+    .flow-content p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    @media(max-width: 1024px) {
+      .hero-layout {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .hero-copy {
+        margin: 0 auto;
+      }
+      .hero-actions {
+        justify-content: center;
+      }
+      .user-flow {
+        max-width: 500px;
+        margin: 40px auto 0;
+        text-align: left;
+      }
+    }
+
+    @keyframes hero-in {
+      from {
+        opacity: 0;
+        transform: translateY(20px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .btn-primary {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 15px;
+      padding: 14px 32px;
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow-btn);
+      transition: background 0.25s var(--ease-out-quart), transform 0.2s var(--ease-out-expo), box-shadow 0.25s var(--ease-out-quart)
+    }
+
+    .btn-primary:hover {
+      background: var(--accent);
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: var(--shadow-btn-hover)
+    }
+
+    .btn-primary:active {
+      transform: translateY(-1px) scale(0.99)
+    }
+
+    .btn-secondary {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 15px;
+      padding: 14px 32px;
+      background: transparent;
+      color: var(--ink);
+      border: 1.5px solid var(--ink);
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.25s var(--ease-out-quart), color 0.25s var(--ease-out-quart), transform 0.2s var(--ease-out-expo), background 0.25s
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-2px);
+      background: rgba(0, 184, 124, 0.04)
+    }
+
+    .hero-deco {
+      position: absolute;
+      right: -60px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 520px;
+      height: 520px;
+      border: 1px solid rgba(232, 228, 216, 0.7);
+      border-radius: 50%;
+      opacity: 0.5;
+      pointer-events: none;
+      animation: deco-float 8s ease-in-out infinite
+    }
+
+    .hero-deco::before {
+      content: '';
+      position: absolute;
+      inset: 40px;
+      border: 1px dashed rgba(0, 184, 124, 0.35);
+      border-radius: 50%;
+      animation: spin 24s linear infinite
+    }
+
+    .hero-deco::after {
+      content: '';
+      position: absolute;
+      inset: 80px;
+      border: 1px solid rgba(232, 228, 216, 0.5);
+      border-radius: 50%;
+      animation: spin 40s linear infinite reverse
+    }
+
+    .hero-deco-inner {
+      position: absolute;
+      inset: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 184, 124, 0.06) 0%, transparent 70%);
+      pointer-events: none
+    }
+
+    @keyframes deco-float {
+
+      0%,
+      100% {
+        transform: translateY(-50%) translateX(0)
+      }
+
+      50% {
+        transform: translateY(calc(-50% - 18px)) translateX(-6px)
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    /* ── VIDEO STRIP ─────────────────────────────── */
+    /* Replace YOUR_VIDEO_ID in the HTML below with your actual YouTube video ID */
+    .video-strip {
+      position: relative;
+      z-index: 1;
+      background: #000;
+      border-top: 1px solid rgba(255, 255, 255, 0.06)
+    }
+
+    .video-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 42%;
+      overflow: hidden
+    }
+
+    .video-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      pointer-events: none
+    }
+
+    .video-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      cursor: pointer;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, transparent 40%);
+      display: flex;
+      align-items: flex-end;
+      text-decoration: none;
+    }
+
+    .video-label {
+      margin: 0 0 24px 32px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .video-play-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1.5s infinite;
+      flex-shrink: 0
+    }
+
+    .video-play-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s, transform 0.3s var(--ease-out-expo);
+      backdrop-filter: blur(8px);
+    }
+
+    .video-overlay:hover .video-play-btn {
+      background: rgba(0, 184, 124, 0.4);
+      transform: translate(-50%, -50%) scale(1.08)
+    }
+
+    .video-play-btn svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
+      margin-left: 4px
+    }
+
+    /* ── STATS BAR ───────────────────────────────── */
+    .stats-bar {
+      position: relative;
+      z-index: 1;
+      background: var(--ink);
+      color: var(--paper);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .stat-item {
+      padding: 36px 40px;
+      border-right: 1px solid rgba(255, 255, 255, 0.06);
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s var(--ease-out-quart);
+    }
+
+    .stat-item::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 100%, rgba(0, 184, 124, 0.08) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s var(--ease-out-quart)
+    }
+
+    .stat-item:hover::before {
+      opacity: 1
+    }
+
+    .stat-item:last-child {
+      border-right: none
+    }
+
+    .stat-number {
+      font-family: var(--font-display);
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 6px;
+      transition: all 0.4s var(--ease-out-expo)
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 400;
+      color: rgba(242, 240, 232, 0.4);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      line-height: 1.5
+    }
+
+    .stat-source {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: rgba(242, 240, 232, 0.2);
+      letter-spacing: 0.04em;
+      margin-top: 4px
+    }
+
+    /* ── SECTION SHARED ──────────────────────────── */
+    section {
+      position: relative;
+      z-index: 1
+    }
+
+    .section-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 100px 80px
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .section-label::before {
+      content: '//';
+      color: var(--accent);
+      font-weight: 400
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 20px
+    }
+
+    .section-body {
+      font-size: 16px;
+      font-weight: 300;
+      color: var(--muted);
+      max-width: 580px;
+      line-height: 1.8;
+      letter-spacing: 0.01em
+    }
+
+    /* ── PROBLEM ─────────────────────────────────── */
+    .problem {
+      background: var(--paper)
+    }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 56px
+    }
+
+    .problem-card {
+      background: var(--card);
+      border: 1px solid rgba(232, 228, 216, 0.8);
+      border-radius: 10px;
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      transition: transform 0.4s var(--ease-out-expo), box-shadow 0.4s var(--ease-out-expo);
+      transform-style: preserve-3d
+    }
+
+    .problem-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, transparent 50%);
+      pointer-events: none;
+      opacity: 0.5
+    }
+
+    .problem-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-card-hover)
+    }
+
+    .problem-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      z-index: 1
+    }
+
+    .problem-card.a::before {
+      background: linear-gradient(90deg, var(--accent2), #ff8c70)
+    }
+
+    .problem-card.b::before {
+      background: linear-gradient(90deg, var(--accent), #00d68f)
+    }
+
+    .problem-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 3px;
+      font-weight: 400
+    }
+
+    .tag-a {
+      background: #fff0ed;
+      color: var(--accent2)
+    }
+
+    .tag-b {
+      background: #e8f9f3;
+      color: #008f5e
+    }
+
+    .problem-card h3 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+      line-height: 1.2
+    }
+
+    .problem-card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.8;
+      font-weight: 300
+    }
+
+    /* ── HOW IT WORKS ────────────────────────────── */
+    .how {
+      background: #0a0f0d;
+      color: var(--paper)
+    }
+
+    .how .section-title {
+      color: var(--paper);
+      letter-spacing: -2px
+    }
+
+    .how .section-body {
+      color: rgba(242, 240, 232, 0.45)
+    }
+
+    .how .section-label {
+      color: rgba(242, 240, 232, 0.25)
+    }
+
+    .pipeline {
+      margin-top: 64px;
+      display: flex;
+      flex-direction: column;
+      gap: 0
+    }
+
+    .pipeline-step {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 32px;
+      align-items: start;
+      padding: 40px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+      transition: background 0.3s var(--ease-out-quart)
+    }
+
+    .pipeline-step::before {
+      content: '';
+      position: absolute;
+      left: -1px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--accent);
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform 0.4s var(--ease-out-expo)
+    }
+
+    .pipeline-step:hover::before {
+      transform: scaleY(1)
+    }
+
+    .pipeline-step:last-child {
+      border-bottom: none
+    }
+
+    .step-num {
+      font-family: var(--font-display);
+      font-size: 56px;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.04);
+      line-height: 1;
+      letter-spacing: -2px;
+      position: relative;
+      transition: color 0.3s
+    }
+
+    .pipeline-step:hover .step-num {
+      color: rgba(255, 255, 255, 0.07)
+    }
+
+    .step-num::after {
+      content: attr(data-n);
+      position: absolute;
+      top: 8px;
+      left: 0;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--accent)
+    }
+
+    .step-content h3 {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--paper);
+      margin-bottom: 8px;
+      letter-spacing: -0.4px;
+      line-height: 1.2
+    }
+
+    .step-content p {
+      font-size: 14px;
+      color: rgba(242, 240, 232, 0.42);
+      line-height: 1.8;
+      font-weight: 300
+    }
+
+    .step-tags {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap
+    }
+
+    .step-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 3px 10px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: rgba(242, 240, 232, 0.3);
+      letter-spacing: 0.05em;
+      transition: background 0.2s, color 0.2s, border-color 0.2s
+    }
+
+    .pipeline-step:hover .step-tag {
+      background: rgba(0, 184, 124, 0.08);
+      color: rgba(0, 184, 124, 0.7);
+      border-color: rgba(0, 184, 124, 0.15)
+    }
+
+    /* ── DEMO ────────────────────────────────────── */
+    .demo {
+      background: var(--paper)
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 56px
+    }
+
+    .demo-card {
+      border: 1px solid rgba(232, 228, 216, 0.7);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--card);
+      box-shadow: var(--shadow-card);
+      transition: transform 0.4s var(--ease-out-expo), box-shadow 0.4s var(--ease-out-expo)
+    }
+
+    .demo-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-card-hover)
+    }
+
+    .demo-screen {
+      height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer
+    }
+
+    .demo-screen::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, transparent 60%);
+      pointer-events: none
+    }
+
+    .demo-screen.demand {
+      background: linear-gradient(135deg, #0a2a1f 0%, #0d3a28 100%)
+    }
+
+    .demo-screen.theft {
+      background: linear-gradient(135deg, #1a0a05 0%, #2a1208 100%)
+    }
+
+    .mock-map {
+      position: relative;
+      width: 260px;
+      height: 160px
+    }
+
+    .mock-feeder {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .mock-feeder::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor
+    }
+
+    .f1 {
+      top: 30px;
+      left: 40px;
+      color: #00b87c
+    }
+
+    .f2 {
+      top: 60px;
+      left: 110px;
+      color: #f5c842
+    }
+
+    .f3 {
+      top: 25px;
+      left: 170px;
+      color: #ff5c3a
+    }
+
+    .f4 {
+      top: 90px;
+      left: 60px;
+      color: #f5c842
+    }
+
+    .f5 {
+      top: 100px;
+      left: 150px;
+      color: #00b87c
+    }
+
+    .f6 {
+      top: 50px;
+      left: 220px;
+      color: #ff3a3a
+    }
+
+    .mock-map svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%
+    }
+
+    .mock-label {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 16px
+    }
+
+    .mock-legend {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: rgba(255, 255, 255, 0.4)
+    }
+
+    .mock-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%
+    }
+
+    .mock-list {
+      width: 220px
+    }
+
+    .mock-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      margin-bottom: 4px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.04);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.5)
+    }
+
+    .mock-score {
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 600
+    }
+
+    .score-high {
+      background: rgba(255, 92, 58, 0.2);
+      color: #ff5c3a
+    }
+
+    .score-med {
+      background: rgba(245, 200, 66, 0.2);
+      color: #f5c842
+    }
+
+    .demo-info {
+      padding: 28px 32px
+    }
+
+    .demo-info h3 {
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.4px;
+      line-height: 1.2
+    }
+
+    .demo-info p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.75;
+      font-weight: 300
+    }
+
+    .demo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 3px;
+      margin-top: 14px
+    }
+
+    .badge-live {
+      background: #e8f9f3;
+      color: #008f5e
+    }
+
+    .badge-live::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #00b87c;
+      animation: pulse 1.5s infinite
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: 0.3;
+        transform: scale(0.85)
+      }
+    }
+
+    /* ── EXPLAINER STRIP ─────────────────────────── */
+    .explainer {
+      background: #0a0f0d;
+      color: var(--paper)
+    }
+
+    .explainer .section-title {
+      color: var(--paper)
+    }
+
+    .explainer .section-body {
+      color: rgba(242, 240, 232, 0.45)
+    }
+
+    .explainer .section-label {
+      color: rgba(242, 240, 232, 0.25)
+    }
+
+    .case-file {
+      margin-top: 56px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .case-file-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 28px;
+      background: rgba(255, 255, 255, 0.04);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .case-file-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: rgba(242, 240, 232, 0.5);
+      letter-spacing: 0.1em
+    }
+
+    .case-file-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 3px 10px;
+      border-radius: 3px;
+      background: rgba(255, 92, 58, 0.15);
+      color: #ff5c3a;
+      letter-spacing: 0.08em
+    }
+
+    .case-file-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0
+    }
+
+    .case-col {
+      padding: 28px;
+      border-right: 1px solid rgba(255, 255, 255, 0.05)
+    }
+
+    .case-col:last-child {
+      border-right: none
+    }
+
+    .case-col-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: rgba(242, 240, 232, 0.2);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 12px
+    }
+
+    .case-col h4 {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--paper);
+      margin-bottom: 8px;
+      letter-spacing: -0.2px
+    }
+
+    .case-col p {
+      font-size: 12px;
+      color: rgba(242, 240, 232, 0.38);
+      line-height: 1.7;
+      font-weight: 300
+    }
+
+    .agent-fired {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: rgba(242, 240, 232, 0.5);
+      margin-bottom: 6px
+    }
+
+    .agent-fired::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    .agent-fired.yes::before {
+      background: var(--accent2)
+    }
+
+    .agent-fired.no::before {
+      background: rgba(255, 255, 255, 0.1)
+    }
+
+    .agent-fired.yes {
+      color: rgba(242, 240, 232, 0.7)
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      color: rgba(242, 240, 232, 0.4);
+      margin-bottom: 8px;
+      line-height: 1.5
+    }
+
+    .checklist-item::before {
+      content: '□';
+      font-family: var(--font-mono);
+      font-size: 12px;
+      flex-shrink: 0;
+      margin-top: 1px
+    }
+
+    /* ── AGENTS ──────────────────────────────────── */
+    .agents {
+      background: #f7f5ee
+    }
+
+    .agents-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 56px
+    }
+
+    .agent-card {
+      background: var(--card);
+      border: 1px solid rgba(232, 228, 216, 0.8);
+      border-radius: 10px;
+      padding: 32px 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: transform 0.4s var(--ease-out-expo), box-shadow 0.4s var(--ease-out-expo)
+    }
+
+    .agent-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), #00d68f);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s var(--ease-out-expo)
+    }
+
+    .agent-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, transparent 50%);
+      pointer-events: none;
+      opacity: 0.4
+    }
+
+    .agent-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-card-hover)
+    }
+
+    .agent-card:hover::before {
+      transform: scaleX(1)
+    }
+
+    .agent-num {
+      font-family: var(--font-display);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: rgba(107, 122, 114, 0.6);
+      text-transform: uppercase;
+      margin-bottom: 12px
+    }
+
+    .agent-card h3 {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+      line-height: 1.2
+    }
+
+    .agent-card p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.75;
+      font-weight: 300
+    }
+
+    .agent-algo {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--accent);
+      margin-top: 14px;
+      letter-spacing: 0.05em;
+      opacity: 0.8
+    }
+
+    /* ── RISK & MITIGATION ───────────────────────── */
+    .risk {
+      background: var(--paper)
+    }
+
+    .risk-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 48px
+    }
+
+    .risk-card {
+      background: var(--card);
+      border: 1px solid rgba(232, 228, 216, 0.8);
+      border-radius: 10px;
+      padding: 32px 28px;
+      box-shadow: var(--shadow-card);
+      transition: transform 0.4s var(--ease-out-expo), box-shadow 0.4s var(--ease-out-expo);
+      position: relative;
+      overflow: hidden
+    }
+
+    .risk-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s var(--ease-out-expo)
+    }
+
+    .risk-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-card-hover)
+    }
+
+    .risk-card:hover::before {
+      transform: scaleX(1)
+    }
+
+    .risk-card.red::before {
+      background: linear-gradient(90deg, var(--accent2), #ff8c70)
+    }
+
+    .risk-card.amber::before {
+      background: linear-gradient(90deg, var(--accent3), #ffd97a)
+    }
+
+    .risk-card.green::before {
+      background: linear-gradient(90deg, var(--accent), #00d68f)
+    }
+
+    .risk-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-bottom: 16px;
+      font-family: var(--font-mono)
+    }
+
+    .risk-icon.red {
+      background: #fff0ed;
+      color: var(--accent2)
+    }
+
+    .risk-icon.amber {
+      background: #fefbeb;
+      color: #c9961a
+    }
+
+    .risk-icon.green {
+      background: #e8f9f3;
+      color: #008f5e
+    }
+
+    .risk-problem {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      font-weight: 400
+    }
+
+    .risk-problem.red {
+      color: var(--accent2)
+    }
+
+    .risk-problem.amber {
+      color: #c9961a
+    }
+
+    .risk-problem.green {
+      color: #008f5e
+    }
+
+    .risk-card h4 {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+      line-height: 1.2
+    }
+
+    .risk-card p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.75;
+      font-weight: 300
+    }
+
+    .no-llm-banner {
+      margin-top: 40px;
+      background: var(--ink);
+      color: var(--paper);
+      border-radius: 10px;
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    .no-llm-banner-text {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.2px
+    }
+
+    .no-llm-banner-sub {
+      font-size: 13px;
+      color: rgba(242, 240, 232, 0.45);
+      margin-top: 4px;
+      font-weight: 300
+    }
+
+    .no-llm-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 184, 124, 0.12);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      padding: 8px 16px;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 184, 124, 0.25);
+      white-space: nowrap
+    }
+
+    .no-llm-badge::before {
+      content: '✓';
+      font-weight: 700;
+      font-size: 12px
+    }
+
+    /* ── TIMELINE ────────────────────────────────── */
+    .timeline-section {
+      background: #f7f5ee
+    }
+
+    .timeline {
+      margin-top: 56px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      position: relative
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      top: 16px;
+      left: 20px;
+      right: 20px;
+      height: 1px;
+      background: var(--grid);
+      z-index: 0
+    }
+
+    .tl-item {
+      padding: 0 20px;
+      position: relative;
+      z-index: 1
+    }
+
+    .tl-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid var(--paper);
+      box-shadow: 0 0 0 1px var(--accent);
+      margin-bottom: 20px;
+      position: relative
+    }
+
+    .tl-week {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+      text-transform: uppercase
+    }
+
+    .tl-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+      color: var(--ink)
+    }
+
+    .tl-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-weight: 300
+    }
+
+    .tl-deliverable {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--accent);
+      margin-top: 10px;
+      letter-spacing: 0.04em;
+      opacity: 0.8
+    }
+
+    /* ── TECH STACK ──────────────────────────────── */
+    .tech {
+      background: var(--ink);
+      color: var(--paper)
+    }
+
+    .tech .section-title {
+      color: var(--paper);
+      letter-spacing: -2px
+    }
+
+    .tech .section-body {
+      color: rgba(242, 240, 232, 0.38)
+    }
+
+    .tech .section-label {
+      color: rgba(242, 240, 232, 0.2)
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 56px
+    }
+
+    .tech-cell {
+      padding: 36px 32px;
+      background: var(--ink);
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s var(--ease-out-quart)
+    }
+
+    .tech-cell::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 184, 124, 0.3), transparent);
+      opacity: 0;
+      transition: opacity 0.4s
+    }
+
+    .tech-cell:hover {
+      background: #0f1812
+    }
+
+    .tech-cell:hover::before {
+      opacity: 1
+    }
+
+    .tech-cell-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: rgba(242, 240, 232, 0.2);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 10px
+    }
+
+    .tech-cell-value {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--paper);
+      margin-bottom: 8px;
+      letter-spacing: -0.2px
+    }
+
+    .tech-cell-why {
+      font-size: 12px;
+      color: rgba(242, 240, 232, 0.3);
+      line-height: 1.7;
+      font-weight: 300
+    }
+
+    /* ── EVALUATION ──────────────────────────────── */
+    .eval {
+      background: var(--paper)
+    }
+
+    .eval-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 48px;
+      font-size: 14px
+    }
+
+    .eval-table th {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(107, 122, 114, 0.6);
+      padding: 12px 20px;
+      text-align: left;
+      border-bottom: 1.5px solid var(--grid)
+    }
+
+    .eval-table td {
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(232, 228, 216, 0.6);
+      vertical-align: middle;
+      transition: background 0.2s
+    }
+
+    .eval-table tr:last-child td {
+      border-bottom: none
+    }
+
+    .eval-table tbody tr:hover td {
+      background: rgba(0, 184, 124, 0.03)
+    }
+
+    .metric-name {
+      font-weight: 500;
+      font-size: 14px;
+      letter-spacing: -0.1px
+    }
+
+    .metric-baseline {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: rgba(107, 122, 114, 0.6)
+    }
+
+    .metric-target {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.5px
+    }
+
+    .metric-bar {
+      height: 3px;
+      background: rgba(232, 228, 216, 0.8);
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden
+    }
+
+    .metric-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #00d68f);
+      border-radius: 2px;
+      transition: width 1.2s var(--ease-out-expo)
+    }
+
+    /* ── CTA ─────────────────────────────────────── */
+    .cta-section {
+      background: var(--accent);
+      position: relative;
+      overflow: hidden
+    }
+
+    .cta-section::before {
+      content: 'GRIDSIGHT';
+      position: absolute;
+      font-family: var(--font-display);
+      font-size: 180px;
+      font-weight: 800;
+      color: rgba(0, 0, 0, 0.06);
+      letter-spacing: -8px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+      pointer-events: none
+    }
+
+    .cta-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 40px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1
+    }
+
+    .cta-text h2 {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 4vw, 48px);
+      font-weight: 800;
+      color: var(--ink);
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+      margin-bottom: 12px
+    }
+
+    .cta-text p {
+      font-size: 16px;
+      color: rgba(10, 15, 13, 0.65);
+      max-width: 420px
+    }
+
+    .btn-cta-white {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 15px;
+      padding: 16px 36px;
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.15);
+      transition: background 0.25s var(--ease-out-quart), transform 0.2s var(--ease-out-expo), box-shadow 0.25s var(--ease-out-quart);
+      display: inline-block
+    }
+
+    .btn-cta-white:hover {
+      background: #fff;
+      color: var(--ink);
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2)
+    }
+
+    /* ── FOOTER ──────────────────────────────────── */
+    footer {
+      background: var(--ink);
+      color: rgba(242, 240, 232, 0.35);
+      padding: 40px 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-family: var(--font-mono)
+    }
+
+    .footer-logo {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--paper)
+    }
+
+    .footer-logo span {
+      color: var(--accent)
+    }
+
+    /* ── ANIMATIONS ──────────────────────────────── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s var(--ease-out-expo), transform 0.7s var(--ease-out-expo);
+      will-change: transform, opacity
+    }
+
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0)
+    }
+
+    .problem-grid .fade-up:nth-child(2) {
+      transition-delay: 0.1s
+    }
+
+    .agents-grid .fade-up:nth-child(2) {
+      transition-delay: 0.06s
+    }
+
+    .agents-grid .fade-up:nth-child(3) {
+      transition-delay: 0.12s
+    }
+
+    .agents-grid .fade-up:nth-child(4) {
+      transition-delay: 0.18s
+    }
+
+    .agents-grid .fade-up:nth-child(5) {
+      transition-delay: 0.24s
+    }
+
+    .agents-grid .fade-up:nth-child(6) {
+      transition-delay: 0.3s
+    }
+
+    .risk-grid .fade-up:nth-child(2) {
+      transition-delay: 0.07s
+    }
+
+    .risk-grid .fade-up:nth-child(3) {
+      transition-delay: 0.14s
+    }
+
+    .tech-grid .fade-up:nth-child(2) {
+      transition-delay: 0.06s
+    }
+
+    .tech-grid .fade-up:nth-child(3) {
+      transition-delay: 0.12s
+    }
+
+    .tech-grid .fade-up:nth-child(4) {
+      transition-delay: 0.18s
+    }
+
+    .tech-grid .fade-up:nth-child(5) {
+      transition-delay: 0.24s
+    }
+
+    .tech-grid .fade-up:nth-child(6) {
+      transition-delay: 0.3s
+    }
+
+    /* ── RESPONSIVE ──────────────────────────────── */
+    @media(max-width:768px) {
+      .hero {
+        padding: 100px 24px 60px
+      }
+
+      .section-inner {
+        padding: 60px 24px
+      }
+
+      .stats-bar {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .problem-grid,
+      .demo-grid,
+      .agents-grid,
+      .tech-grid,
+      .risk-grid {
+        grid-template-columns: 1fr
+      }
+
+      .case-file-body {
+        grid-template-columns: 1fr
+      }
+
+      .case-col {
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05)
+      }
+
+      .case-col:last-child {
+        border-bottom: none
+      }
+
+      nav {
+        padding: 0 20px
+      }
+
+      .nav-links {
+        display: none
+      }
+
+      .hamburger {
+        display: flex
+      }
+
+      .nav-cta {
+        display: none
+      }
+
+      footer {
+        flex-direction: column;
+        gap: 12px;
+        padding: 32px 24px;
+        text-align: center
+      }
+
+      .cta-inner {
+        padding: 60px 24px;
+        flex-direction: column
+      }
+
+      .timeline {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .timeline::before {
+        display: none
+      }
+
+      .no-llm-banner {
+        flex-direction: column;
+        align-items: flex-start
+      }
+
+      .video-label {
+        margin: 0 0 16px 16px
+      }
+    }
+
+    @media(max-width:480px) {
+      .stats-bar {
+        grid-template-columns: 1fr
+      }
+
+      .timeline {
+        grid-template-columns: 1fr
+      }
+
+      .hero-headline {
+        letter-spacing: -2px
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══════════════════ NAV ═══════════════════════════ -->
+  <nav>
+    <a class="nav-logo" href="#">Grid<span>Sight</span></a>
+    <ul class="nav-links">
+      <li><a href="#problem">Problem</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="demo_standalone.html">Demo</a></li>
+      <li><a href="#agents">Detection agents</a></li>
+      <li><a href="#risks">Risks</a></li>
+      <li><a href="#eval">Evaluation</a></li>
+    </ul>
+    <div class="nav-right">
+      <a href="demo_standalone.html" class="nav-cta">View demo →</a>
+      <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile menu overlay -->
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <ul>
+      <li><a href="#problem" onclick="closeMobileMenu()">Problem</a></li>
+      <li><a href="#how" onclick="closeMobileMenu()">How it works</a></li>
+      <li><a href="demo_standalone.html" onclick="closeMobileMenu()">Demo</a></li>
+      <li><a href="#agents" onclick="closeMobileMenu()">Detection agents</a></li>
+      <li><a href="#risks" onclick="closeMobileMenu()">Risks</a></li>
+      <li><a href="#eval" onclick="closeMobileMenu()">Evaluation</a></li>
+      <li><a href="demo_standalone.html" class="mobile-cta">View demo →</a></li>
+    </ul>
+  </div>
+
+  <!-- ═══════════════════ HERO ══════════════════════════ -->
+  <section class="hero">
+    <div class="hero-layout">
+      <div class="hero-copy">
+        <div class="hero-eyebrow">BESCOM Hackathon — Theme 8 &nbsp;·&nbsp; AI for Smart Meter Intelligence</div>
+        <h1 class="hero-headline">
+          Predict.<br>
+          <span class="hl">Detect.</span><br>
+          <span class="hl2">Protect.</span>
+        </h1>
+        <p class="hero-sub">GridSight turns BESCOM's 15-minute smart meter data into proactive grid intelligence —
+          predicting demand spikes before they trip transformers, and catching revenue theft before it compounds.</p>
+        <div class="hero-actions">
+          <a href="demo_standalone.html" class="btn-primary">See it in action ↓</a>
+          <a href="#how" class="btn-secondary">How it works</a>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="user-flow">
+          <div class="flow-step">
+            <div class="flow-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+            </div>
+            <div class="flow-content">
+              <h4>Connect Data</h4>
+              <p>Secure ingestion of 15-min smart meter profiles via BESCOM internal API.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <div class="flow-content">
+              <h4>AI Analysis</h4>
+              <p>LSTM and Anomaly Detection agents process patterns in real-time.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+            </div>
+            <div class="flow-content">
+              <h4>Detect & Predict</h4>
+              <p>Instant identification of theft signatures and transformer overload risks.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div class="flow-content">
+              <h4>Take Action</h4>
+              <p>Optimized dispatch for inspections and automated load-balancing alerts.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ VIDEO STRIP ═══════════════════
+     REPLACE both instances of YOUR_VIDEO_ID below
+     with your actual YouTube video ID (e.g. dQw4w9WgXcQ)
+     ════════════════════════════════════════════════════ -->
+  <section class="video-strip" id="video">
+    <div class="video-wrap">
+      <iframe
+        src="https://www.youtube.com/embed/YOUR_VIDEO_ID?autoplay=1&mute=1&loop=1&playlist=YOUR_VIDEO_ID&controls=0&modestbranding=1&rel=0&playsinline=1"
+        allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"
+        title="GridSight project walkthrough"></iframe>
+      <!-- Clicking this overlay opens the YouTube video in a new tab -->
+      <a class="video-overlay" href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID" target="_blank"
+        rel="noopener noreferrer" aria-label="Watch GridSight project walkthrough on YouTube">
+        <div class="video-play-btn">
+          <svg viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </div>
+        <div class="video-label">
+          <span class="video-play-dot"></span>
+          GridSight — Full Project Walkthrough &nbsp;·&nbsp; Click to open on YouTube
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ STATS BAR ═════════════════════ -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-number" id="stat-atc">200+</div>
+      <div class="stat-label">Simulated smart meters</div>
+      <div class="stat-source">Based on Bangalore load profiles</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" id="stat-agents">5</div>
+      <div class="stat-label">Specialist detection agents</div>
+      <div class="stat-source">Multiple models for consensus validation</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" id="stat-mape">15 Min</div>
+      <div class="stat-label">Data resolution</div>
+      <div class="stat-source">Standard smart meter sampling interval</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" id="stat-detect">24H</div>
+      <div class="stat-label">Prediction horizon</div>
+      <div class="stat-source">Rolling ahead-of-time demand forecasting</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PROBLEM ══════════════════════ -->
+  <section class="problem" id="problem">
+    <div class="section-inner">
+      <div class="section-label">The problem</div>
+      <h2 class="section-title fade-up">Technical gaps in grid visibility and loss detection</h2>
+      <p class="section-body fade-up">Smart meters generate data every 15 minutes, but this high-resolution data is often underutilized for operational intelligence.</p>
+      <div class="problem-grid">
+        <div class="problem-card a fade-up">
+          <span class="problem-tag tag-a">Blind Spot A</span>
+          <h3>No early warning for demand spikes</h3>
+          <p>Distribution transformers and feeders have hard capacity limits. When demand unexpectedly peaks — on a 40°C
+            afternoon or during a major event — transformers trip, cables overheat, and outages ripple across entire
+            neighbourhoods. Control rooms currently react after the fact. There is no mechanism to look 1–24 hours
+            ahead.</p>
+        </div>
+        <div class="problem-card b fade-up">
+          <span class="problem-tag tag-b">Blind Spot B</span>
+          <h3>Revenue leakage through theft &amp; tampering</h3>
+          <p>Many losses are deliberate — meter bypass wiring, magnet-based meter slowing, firmware manipulation, or
+            direct tapping from the LT line. Today, inspections are random and yield is low. There is no evidence-based
+            system to target investigations where the probability of finding tampering is highest.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ HOW IT WORKS ═════════════════ -->
+  <section class="how" id="how">
+    <div class="section-inner">
+      <div class="section-label" style="color:rgba(242,240,232,0.3)">How it works</div>
+      <h2 class="section-title fade-up">A read-only intelligence layer. No modification to existing systems.</h2>
+      <p class="section-body fade-up">GridSight ingests data via one-way file drops or read-only API feeds. It never
+        writes back to any BESCOM system. All outputs are advisories — every action requires a human decision.</p>
+      <div class="pipeline">
+        <div class="pipeline-step fade-up">
+          <div class="step-num" data-n="01">01</div>
+          <div class="step-content">
+            <h3>Data ingestion &amp; validation</h3>
+            <p>Smart meter CSVs arrive on a 15-minute or hourly schedule. The pipeline validates timestamps, cleans data
+              quality issues, and imputes short gaps using the peer-group median for that time slot. Offline meters are
+              flagged immediately on the dashboard.</p>
+            <div class="step-tags"><span class="step-tag">TimescaleDB</span><span class="step-tag">Python ·
+                Pandas</span><span class="step-tag">Great Expectations</span></div>
+          </div>
+        </div>
+        <div class="pipeline-step fade-up">
+          <div class="step-num" data-n="02">02</div>
+          <div class="step-content">
+            <h3>Per-meter demand baseline (Prophet)</h3>
+            <p>Facebook Prophet builds a unique baseline for each meter — learning daily and weekly consumption
+              patterns, Bangalore-specific holiday effects, and weather sensitivity via a temperature co-variate. Fast
+              to train; interpretable by design.</p>
+            <div class="step-tags"><span class="step-tag">Facebook Prophet</span><span class="step-tag">Weather API
+                (area-level)</span></div>
+          </div>
+        </div>
+        <div class="pipeline-step fade-up">
+          <div class="step-num" data-n="03">03</div>
+          <div class="step-content">
+            <h3>Zone-level forecasting &amp; risk classification</h3>
+            <p>Per-meter forecasts are aggregated to feeder and transformer level, then refined by a Temporal Fusion
+              Transformer that produces probabilistic P10/P50/P90 bands. Each transformer gets a colour-coded risk zone
+              — GREEN through RED — updated every hour.</p>
+            <div class="step-tags"><span class="step-tag">PyTorch TFT</span><span class="step-tag">P10 / P50 / P90
+                bands</span></div>
+          </div>
+        </div>
+        <div class="pipeline-step fade-up">
+          <div class="step-num" data-n="04">04</div>
+          <div class="step-content">
+            <h3>Five-agent anomaly detection</h3>
+            <p>Five independent specialist agents run in parallel on every meter. A meter is only escalated when at
+              least 3 of 5 agents independently raise an alarm and the flag has persisted for 7+ days. No single signal
+              ever triggers an inspection.</p>
+            <div class="step-tags"><span class="step-tag">CUSUM</span><span class="step-tag">KNN peer
+                comparison</span><span class="step-tag">Rule engine</span><span class="step-tag">Pattern
+                matching</span><span class="step-tag">Feeder balance audit</span></div>
+          </div>
+        </div>
+        <div class="pipeline-step fade-up">
+          <div class="step-num" data-n="05">05</div>
+          <div class="step-content">
+            <h3>Actionable output &amp; audit trail</h3>
+            <p>The dashboard surfaces a colour-coded risk map and a table of escalated meters. For each flagged meter,
+              GridSight auto-generates an Inspection Case File — a plain-language PDF with consumption graphs, which
+              agents fired, and a prioritised field checklist. Accessible on mobile, no app install needed.</p>
+            <div class="step-tags"><span class="step-tag">Streamlit · Folium</span><span class="step-tag">ReportLab
+                PDF</span><span class="step-tag">Audit log</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ DEMO ══════════════════════════ -->
+  <section class="demo" id="demo">
+    <div class="section-inner">
+      <div class="section-label">Live demo</div>
+      <h2 class="section-title fade-up">See GridSight in action</h2>
+      <p class="section-body fade-up">Both engines run on synthetic data with injected anomalies and realistic Bangalore
+        load profiles including temperature effects, weekday patterns, and festival spikes.</p>
+      <div class="demo-grid">
+        <div class="demo-card fade-up">
+          <div class="demo-screen demand">
+            <div class="mock-map">
+              <svg>
+                <line x1="47" y1="37" x2="117" y2="67" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+                <line x1="117" y1="67" x2="177" y2="32" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+                <line x1="117" y1="67" x2="67" y2="97" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+                <line x1="177" y1="32" x2="227" y2="57" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+                <line x1="67" y1="97" x2="157" y2="107" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+              </svg>
+              <div class="mock-feeder f1"></div>
+              <div class="mock-feeder f2"></div>
+              <div class="mock-feeder f3"></div>
+              <div class="mock-feeder f4"></div>
+              <div class="mock-feeder f5"></div>
+              <div class="mock-feeder f6"></div>
+              <div class="mock-label">
+                <span class="mock-legend"><span class="mock-dot" style="background:#00b87c"></span>Green</span>
+                <span class="mock-legend"><span class="mock-dot" style="background:#f5c842"></span>Yellow</span>
+                <span class="mock-legend"><span class="mock-dot" style="background:#ff5c3a"></span>Orange</span>
+                <span class="mock-legend"><span class="mock-dot" style="background:#ff3a3a"></span>Red</span>
+              </div>
+            </div>
+          </div>
+          <div class="demo-info">
+            <h3>Part A — Demand &amp; Risk Zoning</h3>
+            <p>Colour-coded feeder map with 24-hour ahead forecasts. Click any node to see the P10/P50/P90 forecast
+              curve, top demand drivers, and recommended action for control room operators.</p>
+            <span class="demo-badge badge-live">● Live dashboard</span>
+          </div>
+        </div>
+        <div class="demo-card fade-up">
+          <div class="demo-screen theft">
+            <div class="mock-list">
+              <div
+                style="font-family:var(--font-mono);font-size:9px;color:rgba(255,255,255,0.25);padding:0 12px 10px;letter-spacing:0.08em;text-transform:uppercase">
+                Flagged meters — escalated</div>
+              <div class="mock-row"><span>MTR-4471</span><span class="mock-score score-high">84 / ESCALATE</span></div>
+              <div class="mock-row"><span>MTR-2203</span><span class="mock-score score-high">79 / ESCALATE</span></div>
+              <div class="mock-row"><span>MTR-0881</span><span class="mock-score score-med">61 / MONITOR</span></div>
+              <div class="mock-row"><span>MTR-3344</span><span class="mock-score score-high">91 / ESCALATE</span></div>
+              <div class="mock-row" style="opacity:0.4"><span>MTR-1122</span><span class="mock-score score-med">48 /
+                  MONITOR</span></div>
+            </div>
+          </div>
+          <div class="demo-info">
+            <h3>Part B — Anomaly &amp; Theft Detection</h3>
+            <p>Every escalated meter comes with a full Inspection Case File — consumption graphs versus peer group,
+              which agents fired and when, and a prioritised field checklist for the inspection team.</p>
+            <span class="demo-badge badge-live">● Live detection</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ EXPLAINABILITY ═══════════════ -->
+  <section class="explainer" id="explainer">
+    <div class="section-inner">
+      <div class="section-label" style="color:rgba(242,240,232,0.25)">Explainability</div>
+      <h2 class="section-title fade-up" style="color:var(--paper)">Every flag comes with a reason. Every reason is
+        auditable.</h2>
+      <p class="section-body fade-up">GridSight auto-generates a plain-language Inspection Case File for every escalated
+        meter. Here's what one looks like.</p>
+      <div class="case-file fade-up">
+        <div class="case-file-header">
+          <span class="case-file-title">INSPECTION CASE FILE &nbsp;·&nbsp; MTR-4471 &nbsp;·&nbsp; Koramangala Zone 4
+            &nbsp;·&nbsp; Generated 07-May-2025 09:14</span>
+          <span class="case-file-badge">ESCALATE — Score 84/100</span>
+        </div>
+        <div class="case-file-body">
+          <div class="case-col">
+            <div class="case-col-label">Agents that fired</div>
+            <h4>3 of 5 agents triggered</h4>
+            <div class="agent-fired yes">Break detector (CUSUM)</div>
+            <div class="agent-fired yes">Peer comparator (KNN)</div>
+            <div class="agent-fired yes">Pattern matcher</div>
+            <div class="agent-fired no">Impossibility checker</div>
+            <div class="agent-fired no">Feeder balance auditor</div>
+          </div>
+          <div class="case-col">
+            <div class="case-col-label">What was observed</div>
+            <h4>Sustained 38% consumption drop</h4>
+            <p>From 12-Apr-2026, daily kWh dropped from a 14-day average of 18.4 kWh to 11.3 kWh. Peer group of 17
+              similar meters shows no concurrent drop. Pattern shows near-zero readings between 23:00–05:00 while
+              daytime usage continues normally — consistent with a bypass wire active at night.</p>
+          </div>
+          <div class="case-col">
+            <div class="case-col-label">Recommended field actions</div>
+            <h4>Priority inspection checklist</h4>
+            <div class="checklist-item">Inspect meter terminal block for bypass wiring</div>
+            <div class="checklist-item">Check meter seal integrity and anti-tamper sticker</div>
+            <div class="checklist-item">Compare meter reading against feeder DT balance</div>
+            <div class="checklist-item">Photograph meter and LT service line connections</div>
+            <div class="checklist-item">Note meter serial number for firmware audit</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ AGENTS ════════════════════════ -->
+  <section class="agents" id="agents">
+    <div class="section-inner">
+      <div class="section-label">Detection agents</div>
+      <h2 class="section-title fade-up">Five independent signals. Conviction requires consensus.</h2>
+      <p class="section-body fade-up">No single signal ever triggers an inspection. A meter is escalated only when at
+        least 3 of 5 agents raise alarms simultaneously, the composite score exceeds 75/100, and the flag has persisted
+        for 7+ days.</p>
+      <div class="agents-grid">
+        <div class="agent-card fade-up">
+          <div class="agent-num">Agent 01</div>
+          <h3>Break detector</h3>
+          <p>Watches each meter's own history for a sudden, sustained downward break — the signature of a bypass wire
+            being installed. Ignores random noise; detects sustained shifts.</p>
+          <div class="agent-algo">CUSUM change-point analysis</div>
+        </div>
+        <div class="agent-card fade-up">
+          <div class="agent-num">Agent 02</div>
+          <h3>Peer comparator</h3>
+          <p>Groups each meter with 15–20 "social twins" — same type, same sub-area, similar usage profiles. A
+            consumption far below the peer band stands out even when seasonal effects shift everyone.</p>
+          <div class="agent-algo">K-Nearest Neighbours</div>
+        </div>
+        <div class="agent-card fade-up">
+          <div class="agent-num">Agent 03</div>
+          <h3>Impossibility checker</h3>
+          <p>Catches readings that defy physics or known occupancy patterns — near-zero consumption at a permanently
+            occupied premise, readings below standby minimums, wrong tariff patterns.</p>
+          <div class="agent-algo">Rule engine</div>
+        </div>
+        <div class="agent-card fade-up">
+          <div class="agent-num">Agent 04</div>
+          <h3>Pattern matcher</h3>
+          <p>Scans for known fraud fingerprints: perfectly flat lines (firmware manipulation), night-zero day-normal
+            patterns (bypass active at night), periodic dips at meter-reading intervals.</p>
+          <div class="agent-algo">Template signature matching</div>
+        </div>
+        <div class="agent-card fade-up">
+          <div class="agent-num">Agent 05</div>
+          <h3>Feeder balance auditor</h3>
+          <p>Compares total energy fed into a transformer against the sum of all consumer meters on that feeder. A
+            persistent gap above 5–8% signals that one or more meters are under-reporting.</p>
+          <div class="agent-algo">Mass balance / NTL detection</div>
+        </div>
+        <div class="agent-card fade-up" style="background:#0a0f0d;border-color:#1a2a22">
+          <div class="agent-num" style="color:rgba(242,240,232,0.25)">Fusion</div>
+          <h3 style="color:var(--paper)">Score fusion &amp; escalation gate</h3>
+          <p style="color:rgba(242,240,232,0.4)">Scores fused by weighted sum, weights updated by field feedback.
+            Escalation requires: 3/5 agents firing + composite score &gt;75 + 7-day persistence. Human sign-off before
+            any field visit.</p>
+          <div class="agent-algo">Weighted ensemble</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ RISK & MITIGATION ════════════ -->
+  <section class="risk" id="risks">
+    <div class="section-inner">
+      <div class="section-label">Risks &amp; mitigation</div>
+      <h2 class="section-title fade-up">We know where the system can fail. Here is how we handle it.</h2>
+      <p class="section-body fade-up">Every AI system has failure modes. GridSight is designed with explicit mitigations
+        — and human sign-off before any action is ever taken.</p>
+      <div class="risk-grid">
+        <div class="risk-card red fade-up">
+          <div class="risk-icon red">⚠</div>
+          <div class="risk-problem red">Risk — false positives</div>
+          <h4>Flagging innocent meters</h4>
+          <p>A 3-of-5 agent consensus gate + 7-day persistence + composite score &gt;75/100 ensures no single anomaly
+            triggers an investigation. Estimated false positive rate &lt;10%. All FP are visible on the dashboard with
+            full audit trail, and field feedback re-weights agent scores over time.</p>
+        </div>
+        <div class="risk-card amber fade-up">
+          <div class="risk-icon amber">⚡</div>
+          <div class="risk-problem amber">Risk — data quality</div>
+          <h4>Gaps, noise &amp; offline meters</h4>
+          <p>Great Expectations validates every batch before any model sees data. Short gaps (&lt;2 hrs) are imputed
+            using peer-group median for that slot. Meters offline &gt;2 hours are flagged on the dashboard immediately —
+            never silently treated as zero consumption.</p>
+        </div>
+        <div class="risk-card green fade-up">
+          <div class="risk-icon green">🔒</div>
+          <div class="risk-problem green">Risk — data privacy</div>
+          <h4>Sensitive consumption data</h4>
+          <p>No raw meter data leaves BESCOM's compute perimeter. All models run fully on-premise. No hosted LLM is used
+            at any stage of the pipeline. Outputs are aggregated scores and flags — raw readings never appear in any
+            external system.</p>
+        </div>
+      </div>
+      <div class="no-llm-banner fade-up">
+        <div>
+          <div class="no-llm-banner-text">Non-negotiable: Zero hosted LLM on sensitive data</div>
+          <div class="no-llm-banner-sub">All models (Prophet, TFT, scikit-learn agents) run inside BESCOM's compute
+            environment. No data leaves the perimeter at any stage.</div>
+        </div>
+        <span class="no-llm-badge">✓ Fully on-premise · Open-source stack only</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ IMPLEMENTATION TIMELINE ══════ -->
+  <section class="timeline-section" id="timeline">
+    <div class="section-inner">
+      <div class="section-label">Development Roadmap</div>
+      <h2 class="section-title fade-up">Phased development and validation plan.</h2>
+      <p class="section-body fade-up">A structured approach to move from the current prototype to a production-ready system with deep field validation.</p>
+      <div class="timeline fade-up">
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-week">Week 1–2</div>
+          <div class="tl-title">Data integration</div>
+          <div class="tl-desc">One-way file feed or read-only API setup. Schema validation pipeline. TimescaleDB
+            ingestion. First Prophet baselines trained on 90-day historical data.</div>
+          <div class="tl-deliverable">→ Live data feed confirmed</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-week">Week 3–4</div>
+          <div class="tl-title">Forecasting live</div>
+          <div class="tl-desc">TFT zone model trained. Risk zone dashboard deployed internally for control room review.
+            Temperature co-variate integrated. First MAPE measurements vs naive baseline.</div>
+          <div class="tl-deliverable">→ Dashboard v1 live internally</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-week">Week 5–6</div>
+          <div class="tl-title">Anomaly detection</div>
+          <div class="tl-desc">All 5 agents deployed. Score fusion gate calibrated. First Inspection Case Files
+            generated. Field team shadow-testing begins — comparing GridSight flags against known cases.</div>
+          <div class="tl-deliverable">→ First case files generated</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-week">Week 7–8</div>
+          <div class="tl-title">Calibration &amp; handover</div>
+          <div class="tl-desc">False positive rate measured against field outcomes. Agent weights updated from feedback.
+            Audit log verified. Full documentation and handover to BESCOM operations team.</div>
+          <div class="tl-deliverable">→ Production handover</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ TECH STACK ════════════════════ -->
+  <section class="tech" id="tech">
+    <div class="section-inner">
+      <div class="section-label">Architecture</div>
+      <h2 class="section-title fade-up">Open-source. No proprietary lock-in. Runs inside BESCOM's environment.</h2>
+      <p class="section-body fade-up">Zero raw meter data leaves the BESCOM compute perimeter. All models are classical
+        ML and time-series algorithms. No hosted LLM touches sensitive data.</p>
+      <div class="tech-grid">
+        <div class="tech-cell fade-up">
+          <div class="tech-cell-label">Data storage</div>
+          <div class="tech-cell-value">TimescaleDB</div>
+          <div class="tech-cell-why">PostgreSQL extension optimised for time-series. SQL-native — no new skills needed
+            for BESCOM DBAs.</div>
+        </div>
+        <div class="tech-cell fade-up">
+          <div class="tech-cell-label">Data pipeline</div>
+          <div class="tech-cell-value">Python · Pandas</div>
+          <div class="tech-cell-why">Standard stack with Great Expectations for data quality validation before any model
+            sees the data.</div>
+        </div>
+        <div class="tech-cell fade-up">
+          <div class="tech-cell-label">Baseline forecasting</div>
+          <div class="tech-cell-value">Facebook Prophet</div>
+          <div class="tech-cell-why">Interpretable; handles seasonality and Bangalore holidays natively; fast to retrain
+            per meter.</div>
+        </div>
+        <div class="tech-cell fade-up">
+          <div class="tech-cell-label">Zone forecasting</div>
+          <div class="tech-cell-value">PyTorch TFT</div>
+          <div class="tech-cell-why">State-of-art probabilistic accuracy; learns feature importance automatically; no
+            GPU required for inference.</div>
+        </div>
+        <div class="tech-cell fade-up">
+          <div class="tech-cell-label">Anomaly agents</div>
+          <div class="tech-cell-value">scikit-learn · statsmodels</div>
+          <div class="tech-cell-why">Lightweight, auditable, no GPU required. Each agent is independently testable and
+            replaceable.</div>
+        </div>
+        <div class="tech-cell fade-up">
+          <div class="tech-cell-label">Dashboard</div>
+          <div class="tech-cell-value">Streamlit · Folium</div>
+          <div class="tech-cell-why">Browser-based, no client install. Map tiles work offline for internal BESCOM
+            networks.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ EVALUATION ════════════════════ -->
+  <section class="eval" id="eval">
+    <div class="section-inner">
+      <div class="section-label">Evaluation</div>
+      <h2 class="section-title fade-up">Validated against simulated smart city profiles.</h2>
+      <p class="section-body fade-up">Initial prototype metrics evaluated on synthetic datasets with injected ground truth. These targets represent the accuracy goals for a production-ready system.</p>
+      <table class="eval-table">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Baseline</th>
+            <th>Prototype Target</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="metric-name">Demand MAPE (day-ahead)</div>
+              <div class="metric-bar">
+                <div class="metric-fill" style="width:55%"></div>
+              </div>
+            </td>
+            <td><span class="metric-baseline">~18%</span></td>
+            <td><span class="metric-target">&lt; 8%</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="metric-name">Risk zone classification accuracy</div>
+              <div class="metric-bar">
+                <div class="metric-fill" style="width:98%"></div>
+              </div>
+            </td>
+            <td><span class="metric-baseline">N/A</span></td>
+            <td><span class="metric-target">&gt; 98%</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="metric-name">Theft recall (injected cases)</div>
+              <div class="metric-bar">
+                <div class="metric-fill" style="width:100%"></div>
+              </div>
+            </td>
+            <td><span class="metric-baseline">0%</span></td>
+            <td><span class="metric-target">100%</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="metric-name">False positive rate</div>
+              <div class="metric-bar">
+                <div class="metric-fill" style="width:90%"></div>
+              </div>
+            </td>
+            <td><span class="metric-baseline">N/A</span></td>
+            <td><span class="metric-target">&lt; 10%</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="metric-name">Average time-to-detection</div>
+              <div class="metric-bar">
+                <div class="metric-fill" style="width:75%"></div>
+              </div>
+            </td>
+            <td><span class="metric-baseline">Never</span></td>
+            <td><span class="metric-target">&lt; 5 days</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ CTA ═══════════════════════════ -->
+  <section class="cta-section">
+    <div class="cta-inner">
+      <div class="cta-text">
+        <h2>Ready to see the full prototype?</h2>
+        <p>GridSight runs on synthetic Bangalore load profiles — 200 meters, realistic patterns, injected anomalies, and
+          a live Streamlit dashboard.</p>
+      </div>
+      <a href="demo_standalone.html" class="btn-cta-white">View the demo →</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ FOOTER ════════════════════════ -->
+  <footer>
+    <div class="footer-logo">Grid<span>Sight</span></div>
+    <div>BESCOM Hackathon 2025 — Theme 8 · AI for Smart Meter Intelligence &amp; Loss Detection</div>
+    <div>Decision-support only. No write-back to BESCOM systems.</div>
+  </footer>
+
+  <script>
+    // ── Mobile nav ────────────────────────────────────────────────────
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    hamburger.addEventListener('click', () => {
+      const isOpen = mobileMenu.classList.toggle('open');
+      hamburger.classList.toggle('open', isOpen);
+      hamburger.setAttribute('aria-expanded', isOpen);
+      mobileMenu.setAttribute('aria-hidden', !isOpen);
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+    });
+
+    function closeMobileMenu() {
+      mobileMenu.classList.remove('open');
+      hamburger.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
+      mobileMenu.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && mobileMenu.classList.contains('open')) closeMobileMenu();
+    });
+
+    // ── Scroll-aware nav shadow ───────────────────────────────────────
+    const nav = document.querySelector('nav');
+    window.addEventListener('scroll', () => {
+      nav.style.boxShadow = window.scrollY > 40
+        ? '0 1px 0 rgba(255,255,255,0.5),0 4px 24px rgba(0,0,0,0.08)'
+        : '0 1px 0 rgba(255,255,255,0.6),0 2px 16px rgba(0,0,0,0.04)';
+    }, { passive: true });
+
+    // ── Fade-up on scroll ─────────────────────────────────────────────
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.08, rootMargin: '0px 0px -32px 0px' });
+    document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+
+    // ── Metric bar animation ──────────────────────────────────────────
+    const barObs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.querySelectorAll('.metric-fill').forEach((bar, i) => {
+            const w = bar.style.width;
+            bar.style.width = '0';
+            bar.style.transitionDelay = `${i * 0.1}s`;
+            setTimeout(() => { bar.style.width = w; }, 120);
+          });
+          barObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    document.querySelectorAll('.eval-table').forEach(t => barObs.observe(t));
+
+    // ── 3D tilt on cards ──────────────────────────────────────────────
+    const TILT_MAX = 6;
+    function applyTilt(el, e) {
+      const r = el.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+      el.style.transform = `perspective(900px) rotateY(${x * TILT_MAX}deg) rotateX(${-y * TILT_MAX}deg) translateY(-5px)`;
+    }
+    function resetTilt(el) { el.style.transform = ''; }
+    document.querySelectorAll('.problem-card, .demo-card, .agent-card, .risk-card').forEach(card => {
+      card.addEventListener('mousemove', e => applyTilt(card, e), { passive: true });
+      card.addEventListener('mouseleave', () => resetTilt(card));
+      card.addEventListener('mouseenter', e => applyTilt(card, e), { passive: true });
+    });
+
+    // ── Hero parallax on deco ─────────────────────────────────────────
+    const deco = document.querySelector('.hero-deco');
+    if (deco) {
+      document.addEventListener('mousemove', e => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 18;
+        const y = (e.clientY / window.innerHeight - 0.5) * 12;
+        deco.style.transform = `translateY(calc(-50% + ${y}px)) translateX(${x * 0.4}px)`;
+      }, { passive: true });
+    }
+
+    // ── Live stats from backend (robust multi-endpoint fetch)
+    // Tries several likely endpoints on the application backend and maps
+    // returned fields to the existing stat tiles. If no endpoint responds
+    // the static HTML targets remain (no fake data will be injected).
+    (async () => {
+      const endpoints = [
+        '/api/v1/gridsight-analytics',
+        '/api/gridsight-analytics',
+        '/api/v1/dashboard/summary',
+        '/api/analytics',
+        '/api/stats'
+      ];
+
+      function formatCurrencyLakhs(x) {
+        // show value in lakhs or crores depending on magnitude
+        if (x == null) return null;
+        const n = Number(x);
+        if (isNaN(n)) return String(x);
+        if (n >= 100000) return '₹' + (n / 10000000).toFixed(2) + ' Cr';
+        if (n >= 1000) return '₹' + (n / 100000).toFixed(2) + ' L';
+        return '₹' + n.toLocaleString();
+      }
+
+      function applyAnalytics(d) {
+        if (!d || typeof d !== 'object') return false;
+
+        let updated = false;
+
+        // Revenue / AT&C / revenue at risk
+        const rev = d.revenue_at_risk_lakhs ?? d.revenue_at_risk ?? d.atc_loss_lakhs ?? d.atc_loss;
+        if (rev != null) {
+          const fmt = formatCurrencyLakhs(rev);
+          if (fmt) {
+            document.getElementById('stat-atc').textContent = fmt;
+            document.querySelector('#stat-atc + .stat-label').textContent = 'Revenue at risk';
+            document.querySelector('#stat-atc ~ .stat-source').textContent = d.last_updated ? 'Updated ' + new Date(d.last_updated).toLocaleString() : 'Model output';
+            updated = true;
+          }
+        }
+
+        // Agents / anomalies flagged
+        const anomalies = d.anomalies_detected ?? d.anomalies_flagged ?? d.active_theft_cases ?? d.activeAlerts ?? d.active_alerts;
+        if (anomalies != null) {
+          document.getElementById('stat-agents').textContent = Number(anomalies).toLocaleString();
+          document.querySelector('#stat-agents + .stat-label').textContent = 'Anomalies flagged';
+          document.querySelector('#stat-agents ~ .stat-source').textContent = d.last_updated ? 'Updated ' + new Date(d.last_updated).toLocaleString() : 'Model output';
+          updated = true;
+        }
+
+        // Forecast accuracy / MAPE
+        if (d.forecast_mape_pct != null || d.forecast_mape != null) {
+          const m = (d.forecast_mape_pct != null) ? d.forecast_mape_pct : d.forecast_mape;
+          document.getElementById('stat-mape').textContent = Number(m).toFixed(1) + '%';
+          document.querySelector('#stat-mape + .stat-label').textContent = 'Forecast MAPE';
+          document.querySelector('#stat-mape ~ .stat-source').textContent = d.last_updated ? 'Updated ' + new Date(d.last_updated).toLocaleString() : 'Model output';
+          updated = true;
+        } else if (d.forecast_accuracy_pct != null) {
+          document.getElementById('stat-mape').textContent = Number(d.forecast_accuracy_pct).toFixed(1) + '%';
+          document.querySelector('#stat-mape + .stat-label').textContent = 'Forecast accuracy';
+          document.querySelector('#stat-mape ~ .stat-source').textContent = d.last_updated ? 'Updated ' + new Date(d.last_updated).toLocaleString() : 'Model output';
+          updated = true;
+        }
+
+        // Time-to-detect
+        const ttd = d.time_to_detect_days ?? d.median_time_to_detect_days ?? d.time_to_detection_days;
+        if (ttd != null) {
+          document.getElementById('stat-detect').textContent = Number(ttd).toFixed(1) + ' days';
+          document.querySelector('#stat-detect + .stat-label').textContent = 'Median time-to-detection';
+          document.querySelector('#stat-detect ~ .stat-source').textContent = d.last_updated ? 'Updated ' + new Date(d.last_updated).toLocaleString() : 'Model output';
+          updated = true;
+        }
+
+        // --- Populate hero model snapshot (only when real fields present) ---
+        try {
+          const modelScoreRaw = d.p_theft_pct ?? d.avg_p_theft ?? d.composite_score ?? d.top_case_score ?? d.p_theft;
+          const recallRaw = d.recall_pct ?? d.recall ?? d.eval_recall_pct;
+          const precisionRaw = d.precision_pct ?? d.precision ?? d.eval_precision_pct;
+          const thresholdRaw = d.decision_threshold ?? d.threshold ?? d.composite_threshold ?? d.threshold_score;
+
+          if (modelScoreRaw != null || recallRaw != null || precisionRaw != null || thresholdRaw != null || ttd != null) {
+            // format score
+            const scoreEl = document.getElementById('model-score');
+            if (scoreEl) {
+              if (modelScoreRaw != null) {
+                let s = Number(modelScoreRaw);
+                if (!isNaN(s)) {
+                  if (s <= 1) s = s * 100;
+                  scoreEl.textContent = Math.round(s) + '%';
+                }
+              }
+            }
+
+            // recall
+            const rEl = document.getElementById('m-recall');
+            if (rEl && recallRaw != null) rEl.textContent = (Number(recallRaw) <= 1 ? (Number(recallRaw) * 100).toFixed(0) : Number(recallRaw)).toString() + (Number(recallRaw) <= 1 ? '%' : '%');
+
+            // precision
+            const pEl = document.getElementById('m-precision');
+            if (pEl && precisionRaw != null) pEl.textContent = (Number(precisionRaw) <= 1 ? (Number(precisionRaw) * 100).toFixed(0) : Number(precisionRaw)).toString() + '%';
+
+            // threshold
+            const tEl = document.getElementById('m-threshold');
+            if (tEl && thresholdRaw != null) tEl.textContent = String(thresholdRaw);
+
+            // time-to-detect in hero
+            const ttdEl = document.getElementById('m-ttd');
+            if (ttdEl && ttd != null) ttdEl.textContent = Number(ttd).toFixed(1) + 'd';
+
+            // sub / top zone
+            const subEl = document.getElementById('model-sub');
+            const tz = d.high_risk_zones ? (Array.isArray(d.high_risk_zones) ? d.high_risk_zones[0] : d.high_risk_zones) : d.top_zone ?? d.zone ?? d.high_risk_zone;
+            if (subEl) subEl.textContent = tz ? `Top risk: ${tz}` : (d.model_name ? d.model_name : 'Model snapshot');
+
+            // timestamp
+            const mt = document.getElementById('model-time');
+            if (mt) mt.textContent = d.last_updated ? new Date(d.last_updated).toLocaleString() : 'Live model output';
+
+            updated = true;
+          }
+        } catch (e) {
+          // Non-fatal, continue
+        }
+
+        return updated;
+      }
+
+      for (const url of endpoints) {
+        try {
+          const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+          if (!res.ok) continue;
+          const d = await res.json();
+          if (applyAnalytics(d)) break; // stop on first useful payload
+        } catch (e) {
+          // ignore and try next endpoint
+        }
+      }
+    })();
+
+    // ── Stat counter animation on scroll ─────────────────────────────
+    // Adds a subtle count-up effect when stats scroll into view
+    const statObs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.style.opacity = '1';
+          e.target.style.transform = 'translateY(0)';
+          statObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    document.querySelectorAll('.stat-item').forEach((el, i) => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(16px)';
+      el.style.transition = `opacity 0.6s var(--ease-out-expo) ${i * 0.08}s, transform 0.6s var(--ease-out-expo) ${i * 0.08}s`;
+      statObs.observe(el);
+    });
+  </script>
+</body>
+
+</html>

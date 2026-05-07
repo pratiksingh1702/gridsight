@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+websockets
+pydantic
+pandas
+numpy
+scikit-learn
+python-multipart
+prophet

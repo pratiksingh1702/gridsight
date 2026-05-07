@@ -1,0 +1,41 @@
+Listed directory data
+Viewed generate_data.py:1-201
+
+The data in the `d:\gridsight\data` directory is the foundational bedrock of the GridSight prototype. Here is the complete breakdown of what it is, how we made it, and how it translates to the real world.
+
+### 1. What type of data is it?
+It is **high-frequency Time-Series data** combined with **Relational Metadata**. 
+*   **`meter_readings/`**: Contains 200 CSV files (one for each simulated household/business). Every row represents a 15-minute interval containing the `timestamp`, `kwh` (energy consumed), and `voltage`.
+*   **`feeder_head_readings/`**: Contains the aggregated total energy leaving the 5 main transformers (feeders).
+*   **`weather.csv`**: Contains hourly temperature and humidity data.
+*   **`feeder_metadata.csv`**: Contains the "consumer index" (Name, Address, Lat/Lon, and which Feeder they are attached to).
+
+### 2. Why do we have it? (The Purpose)
+Real BESCOM smart meter data is highly classified. It contains Personally Identifiable Information (PII) and critical grid vulnerabilities. To build, test, and demonstrate our AI algorithms without violating data privacy laws, we needed a controlled dataset where we knew *exactly* who the thieves were (the "Ground Truth").
+
+### 3. How did we generate it?
+We wrote a physics-simulation script (`generate_data.py`) to build the data from scratch:
+1.  **Base Curves**: It generates a normal daily rhythm (a sine wave) for every meter.
+2.  **Weather Injection**: It looks at the synthetic `weather.csv` and spikes the electricity usage when the temperature crosses 35°C (simulating AC units turning on).
+3.  **Theft Injection**: At day 45, the script secretly selects 10 meters and injects mathematical "theft signatures" into their data. It artificially drops their consumption by 80% (bypass) or flatlines it, giving our AI "Detectives" something to catch.
+
+### 4. What are the assumptions?
+Our data generation makes a few logical assumptions to mimic reality:
+*   **Consumer Types**: Residential loads peak in the evening (6 PM - 8 PM) when people come home. Commercial loads peak during business hours (9 AM - 6 PM).
+*   **Weekly Seasonality**: Offices consume less power on weekends.
+*   **Technical Loss**: We assume that energy traveling from the transformer to the house loses a natural percentage to heat. Any missing energy *beyond* that natural loss is assumed to be theft (used by the Feeder Balance Agent).
+
+### 5. How relevant is it?
+It is **highly relevant for proving the AI logic**. Because we programmed physical realities into the data (e.g., when someone bypasses a meter with a thick, illegal wire, the voltage drops slightly), our Physics Rules Agent behaves exactly as it would in the real world. 
+*   *The Catch*: Real-world data is much noisier. Our synthetic data is mathematically "clean," whereas real BESCOM data will have missing timestamps and corrupted packets.
+
+---
+
+### 🚀 What happens when we use REAL BESCOM data?
+
+If BESCOM hands you access to their real smart meters tomorrow, you do not need to rewrite the AI. Here is the exact pipeline for how we would process, format, and use it:
+
+1.  **Ingestion (The API)**: We delete `generate_data.py`. Instead, we write an API connector that pings BESCOM's **MDMS** (Meter Data Management System) or Kafka stream every 15 minutes to pull the live readings.
+2.  **Processing & Formatting**: Real smart meters lose cellular connection frequently, resulting in missing data. We would pipe the raw data straight into our `validate_and_load.py` script. This script acts as a "washer." It formats the BESCOM JSON/XML into our standard schema (`timestamp`, `kwh`, `voltage`), deletes negative values (meter errors), and uses linear interpolation to fill in any 15-minute gaps.
+3.  **Storage (Database Shift)**: We change `USE_DB = False` to `USE_DB = True` in `config.py`. Instead of dropping the data into `data/processed/` as CSV files, the system will insert the clean data into the **TimescaleDB** (PostgreSQL) hypertable we set up in `setup_db.py`.
+4.  **Usage**: The AI Fusion Engine (`fusion_engine.py`) and the Dashboard don't care where the data comes from. They will query the TimescaleDB, run the 6 agents, and generate the exact same UI alerts and PDF case files on the real data.

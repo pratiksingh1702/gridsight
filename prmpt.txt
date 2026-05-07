@@ -1,0 +1,145 @@
+You are a senior frontend + AI systems engineer.
+
+I have an existing Streamlit-based dashboard for a project called "GridSight", which includes:
+
+* anomaly detection system
+* probabilistic fusion engine
+* physics validation
+* decision engine
+* map-based visualization
+
+Your task is to ADD a new tab called "Simulation Lab" that allows users to inject anomalies and run a full pipeline simulation.
+
+STRICT REQUIREMENTS:
+
+* Do NOT break existing architecture
+* Reuse existing data pipeline and models
+* Simulation must feel realistic, not artificial
+* Code must be modular and clean
+
+---
+
+### FEATURE REQUIREMENTS
+
+## 1. Add New Tab
+
+* Add a new Streamlit tab: "Simulation Lab"
+
+---
+
+## 2. Scenario Builder UI
+
+Create inputs:
+
+* Select feeder / transformer
+* Select one or multiple meters
+* Anomaly type:
+
+  * bypass
+  * tampering
+  * illegal tapping
+* Severity slider (0.1 to 0.9)
+* Duration input (hours/days)
+
+---
+
+## 3. Injection Engine (CORE LOGIC)
+
+Implement a function that modifies time-series data realistically:
+
+* For bypass:
+  reduce consumption suddenly
+* For tampering:
+  introduce periodic zero or irregular readings
+* For illegal tapping:
+  add unaccounted load at transformer level
+
+Ensure:
+
+* changes propagate through time
+* data remains realistic
+
+---
+
+## 4. Simulation Pipeline Integration
+
+After injection:
+
+* run full pipeline:
+
+  * residual intelligence
+  * agent models
+  * probabilistic fusion
+  * physics engine
+  * classification
+  * economic impact
+  * decision engine
+
+---
+
+## 5. Visualization
+
+Display:
+
+### A. Before vs After
+
+* original vs modified consumption
+
+### B. Detection Timeline
+
+* P(theft) over time
+
+### C. Agent Contributions
+
+* contribution of each agent
+
+### D. Physics Validation
+
+* transformer mismatch
+* loss estimation
+
+### E. Decision Output
+
+* theft probability
+* classification
+* estimated loss
+* ROI
+* recommended action
+
+---
+
+## 6. Map Integration
+
+* allow clicking on map to select meter
+* highlight affected meters
+
+---
+
+## 7. Controls
+
+* Run Simulation button
+* Reset Simulation button
+
+---
+
+## 8. Code Structure
+
+Create:
+
+* simulation_engine.py (core logic)
+* simulation_utils.py (data modification functions)
+* integrate with app.py cleanly
+
+---
+
+## 9. Output Requirements
+
+* return structured simulation results
+* reuse existing explainability + decision modules
+
+---
+
+GOAL:
+Create a realistic, interactive simulation that demonstrates how the system detects theft under controlled scenarios and proves robustness to judges.
+
+Avoid fake or hardcoded outputs. Everything must flow through the real pipeline.

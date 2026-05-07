@@ -1,0 +1,282 @@
+reate a cinematic, next-generation smart-grid intelligence platform called **GridSight AI** using **Mapbox GL JS 3D** as the core rendering engine.
+
+The application is an AI-powered electricity infrastructure monitoring system for BESCOM smart meters across Bangalore.
+
+The AI backend analyzes:
+
+* Smart meter readings
+* Consumption behavior
+* Transformer loads
+* Voltage fluctuations
+* Outages
+* Tampering indicators
+* Theft probability
+* Predictive maintenance risks
+* Grid instability patterns
+
+Your task is to build a fully immersive 3D web experience — NOT a flat dashboard.
+
+====================================================
+CORE REQUIREMENT
+================
+
+The entire application should revolve around a fullscreen interactive 3D city map using:
+
+* Mapbox GL JS
+* Mapbox 3D Buildings
+* Three.js integration where needed
+* Deck.gl overlays if beneficial
+* React + Next.js + TypeScript
+* TailwindCSS
+* Framer Motion
+
+The visual style should feel like:
+
+* Google Maps 3D
+* Tesla control center
+* Cyberpunk AI interface
+* ArcGIS intelligence platform
+* Iron Man holographic UI
+
+The provided image is the reference direction:
+
+* Dark mode city
+* Tilted 3D buildings
+* Neon glow
+* Premium map interaction
+* Interactive building inspection
+* Animated overlays
+
+====================================================
+3D MAP EXPERIENCE
+=================
+
+The homepage itself must be the live 3D city.
+
+Features:
+
+* Fullscreen Bangalore 3D map
+* Smooth zoom/pan/rotate
+* Pitch/tilt controls
+* Mouse drag navigation
+* High-quality Mapbox extruded buildings
+* Dynamic lighting
+* Atmospheric fog
+* Neon road glow
+* Animated city ambience
+* Realistic shadows
+
+Use Mapbox 3D building extrusion layers.
+
+Add:
+
+* Pulsating smart meter markers
+* AI anomaly heatmaps
+* Electricity flow animations
+* Zone risk overlays
+* Transformer network lines
+* Holographic info popups
+
+====================================================
+SMART GRID VISUALIZATION
+========================
+
+Every building can have:
+
+* One or multiple smart meters
+* AI anomaly score
+* Theft probability
+* Consumption data
+* Load predictions
+* Grid stability score
+* Voltage metrics
+* Transformer mapping
+
+Color coding:
+
+* Green → Normal
+* Yellow → Warning
+* Orange → Suspicious
+* Red → Theft/Tampering
+* Purple → Critical infrastructure anomaly
+
+Buildings should glow or animate based on risk level.
+
+====================================================
+INTERACTION SYSTEM
+==================
+
+When clicking a building:
+Open a futuristic floating intelligence panel showing:
+
+* Meter ID
+* Live consumption
+* Historical trends
+* AI anomaly explanation
+* Theft probability
+* Risk timeline
+* Transformer details
+* Predicted failures
+* Recommended actions
+
+Add animated charts and holographic transitions.
+
+====================================================
+ADVANCED MAPBOX FEATURES
+========================
+
+Use advanced Mapbox capabilities:
+
+* 3D terrain
+* Building extrusion
+* Custom layers
+* GeoJSON overlays
+* Heatmap layers
+* Symbol layers
+* Animated line layers
+* Camera fly-through animations
+
+Implement:
+
+* City flyover intro animation
+* Smooth camera transitions
+* Zone-to-zone cinematic movement
+
+====================================================
+AI OVERLAY FEATURES
+===================
+
+Add layers for:
+
+* Theft hotspot heatmaps
+* Transformer overload visualization
+* Outage prediction zones
+* Real-time energy flow
+* AI risk clusters
+* Consumption density
+
+The frontend should assume backend APIs exist.
+
+You decide the API response structures yourself.
+
+Mock realistic data for:
+
+* Buildings
+* Meters
+* Zones
+* AI alerts
+* Predictions
+* Historical usage
+
+====================================================
+UI PANELS
+=========
+
+TOP NAVBAR:
+
+* GridSight AI logo
+* Search
+* Live grid status
+* Alerts counter
+* User profile
+* Notification center
+
+LEFT SIDE CONTROL PANEL:
+
+* Layer toggles
+* Zone filters
+* Heatmap controls
+* Time range filters
+* AI confidence sliders
+* Risk category filters
+
+RIGHT SIDE LIVE INTELLIGENCE PANEL:
+
+* Real-time alerts
+* High-risk buildings
+* Transformer failures
+* Active theft detections
+* Live analytics feed
+
+BOTTOM ANALYTICS STRIP:
+
+* Total live meters
+* Current load
+* Grid stability score
+* Active anomaly count
+* Live demand graph
+
+====================================================
+VISUAL DESIGN
+=============
+
+Theme:
+
+* Ultra-dark futuristic UI
+* Cyan and neon blue glows
+* Glassmorphism panels
+* Soft blur
+* Holographic cards
+* Scanline effects
+* Data pulse animations
+
+Animations:
+
+* Smooth hover transitions
+* Floating UI
+* Building glow pulses
+* Energy wave propagation
+* AI scanning effects
+
+====================================================
+PERFORMANCE
+===========
+
+Optimize heavily.
+
+The app should support:
+
+* Thousands of buildings
+* Thousands of smart meters
+* Real-time overlays
+* Continuous animations
+
+Implement:
+
+* Layer optimization
+* Viewport rendering
+* Efficient GeoJSON handling
+* WebGL performance tuning
+* Lazy loading
+* Frustum culling if needed
+
+====================================================
+DELIVERABLES
+============
+
+Build:
+
+1. Complete production-grade frontend
+2. Full Mapbox 3D integration
+3. Realistic mock backend APIs
+4. Modular scalable architecture
+5. Interactive 3D city visualization
+6. AI intelligence overlays
+7. Smooth animations
+8. Responsive layout
+9. Clean reusable components
+10. Enterprise-level visual polish
+
+Also provide:
+
+* Folder structure
+* Setup instructions
+* Environment variable setup for Mapbox token
+* Architecture explanation
+* Why specific technologies were chosen
+* Future scalability recommendations
+
+IMPORTANT:
+This should NOT look like a generic dashboard template.
+
+It should feel like a real futuristic smart-city AI operations center monitoring Bangalore’s electrical infrastructure in real time.
