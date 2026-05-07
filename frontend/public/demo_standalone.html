@@ -407,40 +407,165 @@ canvas.chart-canvas{width:100%;display:block;}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const ZONES_DATA=[
-  {name:'Jayanagar',pct:87,color:'#d4000a',level:'h'},
-  {name:'Koramangala',pct:74,color:'#d4000a',level:'h'},
-  {name:'Banashankari',pct:68,color:'#c45a00',level:'m'},
-  {name:'Rajajinagar',pct:61,color:'#c45a00',level:'m'},
-  {name:'Indiranagar',pct:55,color:'#c45a00',level:'m'},
-  {name:'Whitefield',pct:28,color:'#007a3d',level:'l'},
-  {name:'Yelahanka',pct:15,color:'#007a3d',level:'l'},
-  {name:'Electronic City',pct:22,color:'#007a3d',level:'l'},
-];
-const THEFT_DATA=[
-  {id:'MTR-0047',pct:91,zone:'Sector 7',flag:'CRITICAL'},
-  {id:'MTR-0052',pct:87,zone:'Sector 7',flag:'CRITICAL'},
-  {id:'MTR-0061',pct:79,zone:'Sector 7',flag:'HIGH'},
-  {id:'MTR-0033',pct:65,zone:'Rajajinagar',flag:'HIGH'},
-  {id:'MTR-0108',pct:58,zone:'Koramangala',flag:'MEDIUM'},
-];
-const ALERTS_DATA=[
-  {type:'crit',tag:'THEFT DETECTED',msg:'MTR-0047 bypass signature detected. 3 consecutive dips below 12% nominal.', time:'18:42 IST'},
-  {type:'crit',tag:'GRID STRESS',msg:'Zone 3 (Jayanagar) at 94% capacity. Surge risk in 40 min.', time:'18:38 IST'},
-  {type:'warn',tag:'ANOMALY CLUSTER',msg:'Coordinated drop pattern in Sector 7 (3 meters). Peer deviation: +42%.', time:'18:31 IST'},
-  {type:'warn',tag:'DEMAND SPIKE',msg:'Koramangala evening peak 18% above forecast. Load balancing triggered.', time:'18:25 IST'},
-  {type:'crit',tag:'TAMPER ALERT',msg:'MTR-0052: voltage phase inconsistency detected. Possible meter reverse-connection.', time:'18:20 IST'},
-  {type:'info',tag:'FORECAST',msg:'Peak demand of 312 MW expected at 19:30. Feeder BK-07 pre-alert issued.', time:'18:15 IST'},
-  {type:'warn',tag:'ANOMALY',msg:'MTR-0033 consumption 67% below zone average. Abnormal dip since 17:50.', time:'18:08 IST'},
-  {type:'info',tag:'MODEL UPDATE',msg:'Demand prediction model retrained. MAPE improved to 3.2% (prev 4.8%).', time:'17:55 IST'},
-];
-const ANOMALY_TABLE=[
-  {id:'MTR-0047',zone:'Sector 7',score:91,type:'Bypass/Theft',confidence:94,action:'Dispatch'},
-  {id:'MTR-0052',zone:'Sector 7',score:87,type:'Phase Tamper',confidence:89,action:'Inspect'},
-  {id:'MTR-0061',zone:'Sector 7',score:79,type:'Abnormal Dip',confidence:81,action:'Monitor'},
-  {id:'MTR-0033',zone:'Rajajinagar',score:65,type:'Peer Deviation',confidence:72,action:'Monitor'},
-  {id:'MTR-0108',zone:'Koramangala',score:58,type:'Spike Pattern',confidence:68,action:'Watch'},
-];
+// ══════════════════════════════════════════
+// DATA & BACKEND INTEGRATION
+// ══════════════════════════════════════════
+const API_BASE = 'https://gridsight-backend.onrender.com/api/v1';
+const WS_BASE = 'wss://gridsight-backend.onrender.com/api/v1/realtime';
+
+let ZONES_DATA = [];
+let ALERTS_DATA = [];
+let THEFT_DATA = [];
+let ANOMALY_TABLE = [];
+let bldgData = [];
+let METERS = [];
+
+let fetchRetryCount = 0;
+const MAX_RETRIES = 5;
+
+async function fetchSnapshots() {
+  const statusEl = document.getElementById('tc-health');
+  if (statusEl && statusEl.textContent === 'Offline') {
+    statusEl.textContent = 'Connecting...';
+    statusEl.style.color = 'var(--warn)';
+  }
+
+  try {
+    const [summary, zones, alerts, theft, meters, buildings] = await Promise.all([
+      fetch(`${API_BASE}/dashboard/summary`).then(r => r.json()),
+      fetch(`${API_BASE}/dashboard/zones`).then(r => r.json()),
+      fetch(`${API_BASE}/dashboard/alerts`).then(r => r.json()),
+      fetch(`${API_BASE}/dashboard/theft-cases`).then(r => r.json()),
+      fetch(`${API_BASE}/meters`).then(r => r.json()),
+      fetch(`${API_BASE}/buildings`).then(r => r.json())
+    ]);
+
+    ZONES_DATA = zones.map(z => ({
+      name: z.name,
+      pct: z.pct,
+      color: z.color,
+      level: z.risk,
+      cx: z.cx,
+      cz: z.cz
+    }));
+
+    ALERTS_DATA = alerts.map(a => ({
+      type: a.type === 'crit' ? 'crit' : a.type === 'warn' ? 'warn' : 'info',
+      tag: a.type.toUpperCase(),
+      msg: a.message,
+      time: a.ago || 'now'
+    }));
+
+    THEFT_DATA = theft.map(t => ({
+      id: t.id,
+      pct: t.confidence || 0,
+      zone: t.zone,
+      flag: t.status.toUpperCase()
+    }));
+
+    ANOMALY_TABLE = theft.map(t => ({
+      id: t.id,
+      zone: t.zone,
+      score: t.confidence || 0,
+      type: 'Anomaly',
+      confidence: t.confidence || 0,
+      action: t.status === 'Critical' ? 'Dispatch' : 'Inspect'
+    }));
+
+    bldgData = buildings;
+    METERS = meters;
+
+    updateUIFromSummary(summary);
+    renderZones();
+    renderTheft();
+    renderAlerts();
+    renderAnomalyTable();
+    renderHeatmap();
+    drawSparkline();
+    
+    if (!sceneInitialized && bldgData.length > 0) {
+      updateAllMeshes();
+    }
+
+    fetchRetryCount = 0;
+  } catch (err) {
+    console.error("Fetch failed:", err);
+    if (fetchRetryCount < MAX_RETRIES) {
+      fetchRetryCount++;
+      setTimeout(fetchSnapshots, 2000 * fetchRetryCount);
+    }
+  }
+}
+
+function updateUIFromSummary(s) {
+  if (document.getElementById('tc-alerts')) document.getElementById('tc-alerts').textContent = s.activeAlerts;
+  if (document.getElementById('tc-health')) document.getElementById('tc-health').textContent = s.gridHealthPercent + '%';
+  if (document.getElementById('tc-theft')) document.getElementById('tc-theft').textContent = s.activeTheftCases;
+  
+  const loadKpi = document.querySelector('.kpi-blue .kpi-val');
+  if (loadKpi) loadKpi.textContent = s.totalLoadMw + ' MW';
+  
+  const meterKpi = document.querySelector('.kpi-ok .kpi-val');
+  if (meterKpi) meterKpi.textContent = s.onlineMeters.toLocaleString();
+
+  drawGauge(s.gridHealthPercent);
+}
+
+let ws;
+function setupWebSocket() {
+  try {
+    ws = new WebSocket(WS_BASE);
+    ws.onopen = () => console.log("Connected to Realtime");
+    ws.onmessage = (e) => {
+      const evt = JSON.parse(e.data);
+      if (evt.eventType === 'alert.new') {
+        ALERTS_DATA.unshift({
+          type: evt.payload.type,
+          tag: evt.payload.type.toUpperCase(),
+          msg: evt.payload.message,
+          time: 'now'
+        });
+        if (ALERTS_DATA.length > 15) ALERTS_DATA.pop();
+        renderAlerts();
+      }
+    };
+    ws.onclose = () => setTimeout(setupWebSocket, 5000);
+  } catch (e) {
+    console.error("WS error", e);
+  }
+}
+
+function updateAllMeshes() {
+  if (!scene) return;
+  buildings.forEach(b => scene.remove(b));
+  buildings = [];
+  
+  const grid = 10, gap = 15;
+  bldgData.forEach((bd, i) => {
+    const h = bd.height || 10;
+    const risk = bd.anomaly > 70 ? 'h' : bd.anomaly > 40 ? 'm' : 'l';
+    const baseColor = risk === 'h' ? 0x1a0508 : risk === 'm' ? 0x1a1205 : 0x051a0d;
+    const emColor = LAYER_COLORS.grid[risk];
+    
+    const geom = new THREE.BoxGeometry(bd.width || 4, h, bd.depth || 4);
+    const mat = new THREE.MeshStandardMaterial({ 
+      color: baseColor, 
+      emissive: emColor, 
+      emissiveIntensity: 0.15,
+      roughness: 0.1,
+      metalness: 0.8
+    });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.position.set(bd.x || (i%10 - 5)*15, h/2, bd.z || (Math.floor(i/10) - 4)*15);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData = { bd, risk, emColor, emInt: 0.15 };
+    
+    scene.add(mesh);
+    buildings.push(mesh);
+  });
+}
+
 
 let currentLayer='grid', currentTab='grid';
 
@@ -876,16 +1001,13 @@ setInterval(updateClock,1000); updateClock();
 
 // INIT
 function init(){
-  renderZones(); renderTheft(); renderAlerts();
-  renderHeatmap();
+  fetchSnapshots();
+  setupWebSocket();
   switchTab('grid');
   initCityCanvas();
   setTimeout(()=>{ drawSparkline(); drawGauge(76); },100);
-  // Simulate live updates
-  setInterval(()=>{
-    const n=document.getElementById('tc-alerts');
-    if(n){ const v=parseInt(n.textContent); n.textContent=Math.max(10,v+(Math.random()>.7?1:-1)); }
-  },4000);
+  
+  setInterval(fetchSnapshots, 30000);
 }
 window.addEventListener('resize',()=>{ drawSparkline(); handleResize(); });
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
