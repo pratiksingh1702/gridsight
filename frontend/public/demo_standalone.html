@@ -483,7 +483,7 @@ async function fetchSnapshots() {
     renderHeatmap();
     drawSparkline();
     
-    if (!sceneInitialized && bldgData.length > 0) {
+    if (scene && bldgData.length > 0) {
       updateAllMeshes();
     }
 
@@ -540,30 +540,40 @@ function updateAllMeshes() {
   buildings.forEach(b => scene.remove(b));
   buildings = [];
   
-  const grid = 10, gap = 15;
   bldgData.forEach((bd, i) => {
     const h = bd.height || 10;
-    const risk = bd.anomaly > 70 ? 'h' : bd.anomaly > 40 ? 'm' : 'l';
-    const baseColor = risk === 'h' ? 0x1a0508 : risk === 'm' ? 0x1a1205 : 0x051a0d;
-    const emColor = LAYER_COLORS.grid[risk];
-    
-    const geom = new THREE.BoxGeometry(bd.width || 4, h, bd.depth || 4);
-    const mat = new THREE.MeshStandardMaterial({ 
-      color: baseColor, 
-      emissive: emColor, 
-      emissiveIntensity: 0.15,
-      roughness: 0.1,
-      metalness: 0.8
-    });
-    const mesh = new THREE.Mesh(geom, mat);
-    mesh.position.set(bd.x || (i%10 - 5)*15, h/2, bd.z || (Math.floor(i/10) - 4)*15);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.userData = { bd, risk, emColor, emInt: 0.15 };
-    
-    scene.add(mesh);
-    buildings.push(mesh);
+    const x = bd.x || (i%10 - 5)*15;
+    const z = bd.z || (Math.floor(i/10) - 4)*15;
+    addBuildingMesh(bd, x, z, h);
   });
+}
+
+function addBuildingMesh(bd, x, z, h) {
+  const risk = bd.anomaly > 70 ? 'h' : bd.anomaly > 40 ? 'm' : 'l';
+  const baseColor = risk === 'h' ? 0x1a0508 : risk === 'm' ? 0x1a1205 : 0x051a0d;
+  const emColor = LAYER_COLORS.grid[risk];
+  
+  const geom = new THREE.BoxGeometry(bd.width || 4, h, bd.depth || 4);
+  const mat = new THREE.MeshStandardMaterial({ 
+    color: baseColor, 
+    emissive: emColor, 
+    emissiveIntensity: 0.15,
+    roughness: 0.1,
+    metalness: 0.8
+  });
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.position.set(x, h/2, z);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  mesh.userData = { bd, risk, emColor, emInt: 0.15 };
+  
+  // Wireframe detail
+  const wireGeom = new THREE.BoxGeometry((bd.width || 4) + 0.1, h, (bd.depth || 4) + 0.1);
+  const wireMat = new THREE.MeshBasicMaterial({ color: emColor, wireframe: true, transparent: true, opacity: 0.1 });
+  mesh.add(new THREE.Mesh(wireGeom, wireMat));
+
+  scene.add(mesh);
+  buildings.push(mesh);
 }
 
 
@@ -666,6 +676,8 @@ const LAYER_COLORS = {
   predict: { h: 0x5b21b6, m: 0x9333ea, l: 0x0047ff }
 };
 
+let sceneInitialized = false;
+
 function initCityCanvas() {
   if (renderer) return; // Already initialized
   const W = canvas.offsetWidth, H = canvas.offsetHeight || 280;
@@ -700,61 +712,34 @@ function initCityCanvas() {
   meterGroup = new THREE.Group();
   scene.add(meterGroup);
 
-  // Generate Buildings in 3D grid
+  // Generate Buildings
   buildings = [];
-  const grid = 10, gap = 15;
-  for (let r = 0; r < 8; r++) {
-    for (let c = 0; c < grid; c++) {
-      const h = 5 + Math.random() * 20;
-      const anomaly = Math.random() * 100;
-      const theft = Math.random() * 100;
-      const risk = anomaly > 70 ? 'h' : anomaly > 40 ? 'm' : 'l';
-      
-      const bd = {
-        meterId: 'MTR-' + String(Math.floor(Math.random() * 200)).padStart(4, '0'),
-        zone: ZONES_DATA[Math.floor(Math.random() * ZONES_DATA.length)].name,
-        load: Math.round(50 + Math.random() * 150),
-        voltage: Math.round(210 + Math.random() * 30),
-        anomaly: anomaly,
-        theft: theft,
-        risk: risk,
-        insight: 'AI analysis: Consumption pattern shows ' + (anomaly > 70 ? 'high probability of tampering or theft.' : 'normal variability.')
-      };
-
-      const baseColor = risk === 'h' ? 0x1a0508 : risk === 'm' ? 0x1a1205 : 0x051a0d;
-      const emColor = LAYER_COLORS.grid[risk];
-      
-      // Building geometry with glass-like material
-      const geom = new THREE.BoxGeometry(4, h, 4);
-      const mat = new THREE.MeshStandardMaterial({ 
-        color: baseColor, 
-        emissive: emColor, 
-        emissiveIntensity: 0.15,
-        roughness: 0.1,
-        metalness: 0.8
-      });
-      const mesh = new THREE.Mesh(geom, mat);
-      
-      mesh.position.set((c - grid/2) * gap, h/2, (r - 4) * gap);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      mesh.userData = { bd, risk, emColor, emInt: 0.15 };
-      
-      // Window Details - Improved neon highlights
-      const wireGeom = new THREE.BoxGeometry(4.1, h, 4.1);
-      const wireMat = new THREE.MeshBasicMaterial({ 
-        color: emColor, 
-        wireframe: true, 
-        transparent: true, 
-        opacity: 0.1 
-      });
-      const wireMesh = new THREE.Mesh(wireGeom, wireMat);
-      mesh.add(wireMesh);
-
-      scene.add(mesh);
-      buildings.push(mesh);
+  if (bldgData.length > 0) {
+    updateAllMeshes();
+  } else {
+    // Generate mock buildings if no data yet
+    const grid = 10, gap = 15;
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < grid; c++) {
+        const h = 5 + Math.random() * 20;
+        const anomaly = Math.random() * 100;
+        const risk = anomaly > 70 ? 'h' : anomaly > 40 ? 'm' : 'l';
+        const bd = {
+          meterId: 'MTR-' + String(Math.floor(Math.random() * 200)).padStart(4, '0'),
+          zone: ZONES_DATA.length ? ZONES_DATA[Math.floor(Math.random() * ZONES_DATA.length)].name : 'Unknown',
+          load: Math.round(50 + Math.random() * 150),
+          voltage: Math.round(210 + Math.random() * 30),
+          anomaly: anomaly,
+          theft: Math.random() * 100,
+          risk: risk,
+          insight: 'Simulated data'
+        };
+        addBuildingMesh(bd, (c - grid/2) * gap, (r - 4) * gap, h);
+      }
     }
   }
+
+  sceneInitialized = true;
 
   // Generate Meters
   for (let i = 0; i < 30; i++) {
